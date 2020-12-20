@@ -204,7 +204,10 @@ def solve_uniform_color_grid() -> dict[tuple[float, float, float], str]:
         fig = plt.figure(bx)
         plt.xlabel("Hue (HSV)")
         plt.ylabel("Chroma (LCHuv)")
-        plt.title(f"HKB = {bs[bx]:0.2f}")
+        plt.title(
+            f"HK-corrected perceived brightness = {bs[bx]:0.2f} "
+            f"[LCHuv(100, 0, 0) = 1]"
+        )
         fig.set_size_inches(6, 6)
         fig.tight_layout()
 
@@ -309,7 +312,7 @@ def get_max_indep(rgbs_by_hbc):
 
 if __name__ == "__main__":
 
-    # out = solve_uniform_color_grid()
+    out = solve_uniform_color_grid()
     with open("cmap.p", "rb") as f:
         out = pickle.load(f)
 

@@ -57,6 +57,10 @@ monitors and working conditions) as well as other
 ΔE metrics (for example to allow colorblindness-friendly palette
 generation).
 
+
+A means to produce palettes meeting additional constraints, such as minimum number of colors of
+some brightness, chroma or hue should be added.
+
 ### Bonus: fast color converters
 
 In order to create these paletters, this repo contains a number of `@njit`

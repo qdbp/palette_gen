@@ -1,51 +1,129 @@
 """
-Fast Numba-jitted versions of common color conversion functions suitable for
+Fast jit-compiled versions of common color conversion functions suitable for
 use in optimization routines.
 """
-import itertools
+from collections import Mapping
 from timeit import Timer
+from typing import Any
 
 import numpy as np
 from colour import (
-    HSV_to_RGB,
-    Lab_to_LCHab,
-    Luv_to_LCHuv,
     RGB_COLOURSPACES,
-    XYZ_to_Lab,
-    XYZ_to_Luv,
-    XYZ_to_xyY,
-    sRGB_to_XYZ,
     xyY_to_XYZ,
 )
-from colour.difference import delta_E_CIE2000
 from colour.models import RGB_COLOURSPACE_sRGB
 from numba import njit
 
 sRGB_to_XYZ_d65_mat = RGB_COLOURSPACES["sRGB"].matrix_RGB_to_XYZ
 sRGB_ILL = D65_ILL = RGB_COLOURSPACE_sRGB.whitepoint
 
+# CIE 1931, 2 degree observer
+xyY_D50 = np.array([[0.3457, 0.3585, 1.00]])
+XYZ_D50 = xyY_to_XYZ(xyY_D50)
+
+# these should be more precise, but they are truncated at this point in
+# the srgb standard
 xyY_D65 = np.array([[0.3127, 0.3290, 1.00]])
 XYZ_D65: np.ndarray = xyY_to_XYZ(xyY_D65)
+
+xyY_E = np.array([[1 / 3, 1 / 3, 1.0]])
+
 _LUV_DVEC: np.ndarray = np.asarray([[1.0, 15.0, 3.0]]).T
 _LUV_49_VEC: np.ndarray = np.asarray([4.0, 9.0])
 
 
+# noinspection PyPep8Naming
+@njit  # type: ignore
+def cct_to_D_xyY_jit(T: float) -> np.ndarray:
+    """
+    Finds CIE D-series illuminant xyY coordinates from temperature.
+
+    Parameters
+    ----------
+    T: temperature, Kelvin
+
+    Returns
+    -------
+    xyY triple. Y is always 1.0.
+    """
+
+    out = np.zeros((1, 3))
+    out[..., 2] = 1.0
+
+    t = 1000 / T
+    tt = t * t
+    ttt = tt * t
+
+    if 4000 <= T <= 7000:
+        x = -4.6070 * ttt + 2.9678 * tt + 0.09911 * t + 0.244063
+    elif 7000 < T <= 25000:
+        x = -2.0064 * ttt + 1.9018 * tt + 0.24748 * t + 0.237040
+    else:
+        print(f"Invalid temperature", T, "in CCT conversion.")
+        # this will break any consuming code in (hopefully) obvious ways
+        out[...] = np.nan
+        return out
+
+    y = -3.0 * x * x + 2.870 * x - 0.275
+
+    out[..., 0] = x
+    out[..., 1] = y
+
+    return out
+
+
+@njit  # type: ignore
+def hk_f_kaiser(x: np.ndarray, y: np.ndarray) -> np.ndarray:
+    # noinspection SpellCheckingInspection
+    """
+    Calculates the "F" factor by Kaiser from xyY (x, y) coordinates.
+
+    Donofrio, R. L. (2011). Review Paper: The Helmholtz-Kohlrausch effect.
+    Journal of the Society for Information Display,
+    19(10), 658. doi:10.1889/jsid19.10.658
+    """
+    return (
+        0.256
+        - 0.184 * y
+        - 2.527 * x * y
+        + 4.65 * y * x ** 3
+        + 4.657 * x * y ** 4
+    )
+
+
+@njit  # type: ignore
+def hk_correct_lchab_inplace(lchab: np.ndarray) -> None:
+    """
+    Corrects L* of a L*a*b* array in-place using the Fairchild (1991) formula.
+
+    Fairchild, M. D., & Pirrotta, E. (1991).
+    Predicting the lightness of chromatic object colors using CIELAB.
+    Color Research & Application, 16(6), 385–393. doi:10.1002/col.5080160608
+    """
+    f2 = 2.5 - 0.025 * lchab[..., 0]
+    f1 = 0.116 * np.abs(sin_deg(lchab[..., 2] / 2 - 45)) + 0.085
+    lchab[..., 0] += f1 * f2 * lchab[..., 1]
+
+
+# noinspection PyPep8Naming
 @njit  # type: ignore
 def xyY_to_XYZ_jit(xyY: np.ndarray) -> np.ndarray:
     out: np.ndarray = np.zeros_like(xyY)
     x = xyY[..., 0]
     y = xyY[..., 1]
     Y = xyY[..., 2]
-    _y_nonzero = (y > 1e-12).astype(np.uint8)
-    out[..., 0] = _y_nonzero * x * Y / (y + 1e-15)
+    _y_nonzero = (y > 1e-20).astype(np.uint8)
+    out[..., 0] = _y_nonzero * x * Y / (y + 1e-30)
     out[..., 1] = Y
-    out[..., 2] = _y_nonzero * (1 - x - y) * Y / (y + 1e-15)
+    out[..., 2] = _y_nonzero * (1 - x - y) * Y / (y + 1e-30)
     return out
 
 
 # noinspection PyPep8Naming
 @njit  # type: ignore
-def XYZ_to_xyY_D65_jit(XYZ: np.ndarray) -> np.ndarray:
+def XYZ_to_xyY_jit(
+    XYZ: np.ndarray, black_xy: np.ndarray = xyY_D65
+) -> np.ndarray:
     out: np.ndarray = np.zeros_like(XYZ)
 
     # keepdims doesn't work
@@ -53,14 +131,13 @@ def XYZ_to_xyY_D65_jit(XYZ: np.ndarray) -> np.ndarray:
 
     out[..., 2] = XYZ[..., 1]
     zero_norm = (norm == 0.0).astype(np.uint8)
-    out[..., 0:2] += zero_norm * xyY_D65[..., 0:2]
+    out[..., 0:2] += zero_norm * black_xy[..., 0:2]
     out[..., 0:2] += (1 - zero_norm) * XYZ[..., 0:2] / (norm + 1e-20)
     return out
 
 
 # noinspection PyPep8Naming
 @njit  # type: ignore
-# noinspection PyPep8Naming
 def XYZ_to_Luv_D65_jit(
     XYZ: np.ndarray, XYZr: np.ndarray = XYZ_D65
 ) -> np.ndarray:
@@ -81,18 +158,13 @@ def XYZ_to_Luv_D65_jit(
     return out
 
 
+# noinspection PyPep8Naming
 @njit  # type: ignore
 def Luv_to_LCHuv_jit(Luv: np.ndarray) -> np.ndarray:
     out: np.ndarray = np.zeros_like(Luv)
     out[..., 0] = Luv[..., 0]
     out[..., 1] = np.sqrt(Luv[..., 1] ** 2 + Luv[..., 2] ** 2)
     out[..., 2] = atan2_360(Luv[..., 2], Luv[..., 1])
-    # out[..., 2] = 180 * np.arctan2(Luv[..., 2], Luv[..., 1]) / np.pi
-    # np.maximum(
-    #     out[..., 2],
-    #     out[..., 2] - 360 * np.sign(out[..., 2]),
-    #     out[..., 2],
-    # )
     return out
 
 
@@ -105,17 +177,17 @@ def atan2_360(x: np.ndarray, y: np.ndarray) -> np.ndarray:
 
 
 @njit  # type: ignore
-def cosdeg(arr: np.ndarray) -> np.ndarray:
+def cos_deg(arr: np.ndarray) -> np.ndarray:
     return np.cos(np.deg2rad(arr))
 
 
 @njit  # type: ignore
-def sindeg(arr: np.ndarray) -> np.ndarray:
+def sin_deg(arr: np.ndarray) -> np.ndarray:
     return np.sin(np.deg2rad(arr))
 
 
-@njit  # type: ignore
 # noinspection PyPep8Naming
+@njit  # type: ignore
 def XYZ_to_Lab_D65_jit(
     XYZ: np.ndarray, XYZr: np.ndarray = XYZ_D65
 ) -> np.ndarray:
@@ -144,9 +216,8 @@ def sRGB_to_XYZ_jit(sRGB: np.ndarray) -> np.ndarray:
     )
     out = np.zeros_like(srgb)
     # unrolled matmul to avoid unsupported dim expansion for jit
-    out[..., 0] = srgb @ sRGB_to_XYZ_d65_mat[0]
-    out[..., 1] = srgb @ sRGB_to_XYZ_d65_mat[1]
-    out[..., 2] = srgb @ sRGB_to_XYZ_d65_mat[2]
+    for i in range(3):
+        out[..., i] = (srgb * sRGB_to_XYZ_d65_mat[i]).sum(axis=-1)
     return out
 
 
@@ -159,22 +230,28 @@ def HSV_to_RGB_jit(HSV: np.ndarray) -> np.ndarray:
 
     rgb = np.zeros_like(HSV)
 
-    rgb[..., 0:1] += ch * (
-        ((0 <= hp) & (hp <= 1)) | ((5 < hp) & (hp <= 6))
-    ).astype(np.uint8)
+    hp_ge0 = 0 <= hp
+    hp_le1 = hp <= 1
+    gp_gt5 = 5 < hp
+    hp_le6 = hp <= 6
+    hp_gt_1 = 1 < hp
+
+    rgb[..., 0:1] += ch * ((hp_ge0 & hp_le1) | (gp_gt5 & hp_le6)).astype(
+        np.uint8
+    )
     rgb[..., 0:1] += x * (
-        ((1 < hp) & (hp <= 2)) | ((4 < hp) & (hp <= 5))
+        (hp_gt_1 & (hp <= 2)) | ((4 < hp) & (hp <= 5))
     ).astype(np.uint8)
 
-    rgb[..., 1:2] += ch * ((1 < hp) & (hp <= 3)).astype(np.uint8)
-    rgb[..., 1:2] += x * (
-        ((0 <= hp) & (hp <= 1)) | ((3 < hp) & (hp <= 4))
-    ).astype(np.uint8)
+    rgb[..., 1:2] += ch * (hp_gt_1 & (hp <= 3)).astype(np.uint8)
+    rgb[..., 1:2] += x * ((hp_ge0 & hp_le1) | ((3 < hp) & (hp <= 4))).astype(
+        np.uint8
+    )
 
     rgb[..., 2:] += ch * ((3 < hp) & (hp <= 5)).astype(np.uint8)
-    rgb[..., 2:] += x * (
-        ((2 < hp) & (hp <= 3)) | ((5 < hp) & (hp <= 6))
-    ).astype(np.uint8)
+    rgb[..., 2:] += x * (((2 < hp) & (hp <= 3)) | (gp_gt5 & hp_le6)).astype(
+        np.uint8
+    )
 
     rgb += HSV[..., 2:] - ch
     return rgb
@@ -208,10 +285,10 @@ def dE_2000_jit(Lab1: np.ndarray, Lab2: np.ndarray) -> np.ndarray:
 
     T = (
         1
-        - 0.17 * cosdeg(Hbp - 30)
-        + 0.24 * cosdeg(2 * Hbp)
-        + 0.32 * cosdeg(3 * Hbp + 6)
-        - 0.20 * cosdeg(4 * Hbp - 63)
+        - 0.17 * cos_deg(Hbp - 30)
+        + 0.24 * cos_deg(2 * Hbp)
+        + 0.32 * cos_deg(3 * Hbp + 6)
+        - 0.20 * cos_deg(4 * Hbp - 63)
     )
 
     _leq_180 = 1 - _ge_180
@@ -225,7 +302,7 @@ def dE_2000_jit(Lab1: np.ndarray, Lab2: np.ndarray) -> np.ndarray:
 
     ΔLp = L2 - L1
     ΔCp = C2p - C1p
-    ΔHp = 2 * np.sqrt(C1p * C2p) * sindeg(Δhp / 2)
+    ΔHp = 2 * np.sqrt(C1p * C2p) * sin_deg(Δhp / 2)
 
     SL = 1 + (0.015 * (Lbp - 50) ** 2) / (np.sqrt(20 + (Lbp - 50) ** 2))
     SC = 1 + 0.045 * Cbp
@@ -233,7 +310,7 @@ def dE_2000_jit(Lab1: np.ndarray, Lab2: np.ndarray) -> np.ndarray:
 
     Δθ = 30 * np.exp(-(((Hbp - 275) / 25) ** 2))
     RC = 2 * np.sqrt((Cbp ** 7) / (Cbp ** 7 + 25.0 ** 7))
-    RT = -RC * sindeg(2 * Δθ)
+    RT = -RC * sin_deg(2 * Δθ)
     KL = KC = KH = 1
 
     ΔE = np.sqrt(
@@ -245,9 +322,18 @@ def dE_2000_jit(Lab1: np.ndarray, Lab2: np.ndarray) -> np.ndarray:
     return ΔE
 
 
-def prettytime(stmt: str, rows: int, globals):
-    n, t = Timer(stmt, globals=globals).autorange()
-    if 'dE_' in stmt:
+# noinspection PyPep8Naming
+@njit  # type: ignore
+def dE_2000_sRGB_D65_jit(rgb1: np.ndarray, rgb2: np.ndarray) -> np.ndarray:
+    return dE_2000_jit(
+        XYZ_to_Lab_D65_jit(sRGB_to_XYZ_jit(rgb1)),
+        XYZ_to_Lab_D65_jit(sRGB_to_XYZ_jit(rgb2)),
+    )
+
+
+def pretty_time(stmt: str, rows: int, glb: Mapping[str, Any]) -> None:
+    n, t = Timer(stmt, globals=dict(glb)).autorange()
+    if "dE_" in stmt:
         rows -= 1
     print(
         f"{stmt}: {t / (n * rows):.3g} "
@@ -255,6 +341,7 @@ def prettytime(stmt: str, rows: int, globals):
     )
 
 
+# noinspection SpellCheckingInspection,PyUnusedLocal
 def bench_funcs(size: int = 1000) -> None:
 
     hsv = globals()["__colmat_hsv"] = np.random.random(size=(size, 3))
@@ -262,7 +349,7 @@ def bench_funcs(size: int = 1000) -> None:
     # ground truths
     rgb = globals()["__colmat_rgb"] = HSV_to_RGB_jit(hsv)
     xyz = globals()["__colmat_xyz"] = sRGB_to_XYZ_jit(rgb)
-    xyy = globals()["__colmat_xyy"] = XYZ_to_xyY_D65_jit(xyz)
+    xyy = globals()["__colmat_xyy"] = XYZ_to_xyY_jit(xyz)
     luv = globals()["__colmat_luv"] = XYZ_to_Luv_D65_jit(xyz)
     lchuv = globals()["__colmat_lchuv"] = Luv_to_LCHuv_jit(luv)
     lab = globals()["__colmat_lab"] = XYZ_to_Lab_D65_jit(xyz)
@@ -281,7 +368,7 @@ def bench_funcs(size: int = 1000) -> None:
         "Lab_to_LCHab_jit(__colmat_luv)",
         "dE_2000_jit(__colmat_luv[:-1], __colmat_luv[1:])",
     ]:
-        prettytime(metric, hsv.shape[0], globals())
+        pretty_time(metric, hsv.shape[0], globals())
 
     while True:
         for key in globals():
@@ -290,7 +377,3 @@ def bench_funcs(size: int = 1000) -> None:
                 break
         else:
             break
-
-
-if __name__ == "__main__":
-    bench_funcs(size=10_000)

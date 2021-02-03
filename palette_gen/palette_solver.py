@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import pickle
 from dataclasses import astuple, dataclass
 from functools import cached_property
 from itertools import chain
 from typing import cast
+from idiotic_html_generator import HTML
 
 import matplotlib.pyplot as plt
 
@@ -114,6 +116,8 @@ class PaletteSpec:
 
     def solve_in_context(self, bg_rgb: str, vs: ViewingSpec) -> list[Color]:
 
+        print(f"Solving palette {self.name}...")
+
         rgb = np.random.normal(size=(self.n_colors, 3)).ravel()
         out_jab = np.zeros((self.n_colors, 3))
 
@@ -125,11 +129,13 @@ class PaletteSpec:
             vs.Lmax,
         )
 
+        out_loss = np.zeros(4)
         res = minimize(
             palette_loss,
             rgb,
             args=(
                 out_jab,
+                out_loss,
                 vs.XYZw,
                 vs.Lsw,
                 vs.Lb,
@@ -141,6 +147,8 @@ class PaletteSpec:
             ),
         )
 
+        print(f"loss: {out_loss}")
+
         # noinspection PyTypeChecker
         return sorted(
             Color(rgb=tuple(expit(rgb)), vs=vs)
@@ -148,7 +156,7 @@ class PaletteSpec:
         )
 
 
-NIGHT_VIEW_LIGHT = ViewingSpec("night_light", T=6500, Lsw=1, Lmax=10, Lb=8)
+NIGHT_VIEW_LIGHT = ViewingSpec("night_light", T=6000, Lsw=1, Lmax=15, Lb=8)
 DAY_VIEW_LIGHT = ViewingSpec("day_light", T=6500, Lsw=100, Lmax=60, Lb=40)
 
 
@@ -172,6 +180,7 @@ def hinge_loss(arr: np.ndarray, lb: float, ub: float, α: float) -> np.ndarray:
 def palette_loss(
     logit_rgb: np.ndarray,
     out_jab: np.ndarray,
+    out_loss: np.ndarray,
     xyz_r: np.ndarray,
     Lsw: float,
     Lb: float,
@@ -195,49 +204,31 @@ def palette_loss(
 
     n_colors = len(rgb)
 
-    # pairwise_de = de_jab_ucs(
-    #     jabqmsh.reshape((-1, 1, 7)), jabqmsh.reshape((1, -1, 7))
-    # ).ravel()
-    # insertion sort cause .sort() isn't implemented rofl.
-    # for ix in range(1, len(pairwise_de)):
-    #     for jx in range(ix, 0, -1):
-    #         if pairwise_de[jx - 1] <= pairwise_de[jx]:
-    #             break
-    #         tmp = pairwise_de[jx]
-    #         pairwise_de[jx] = pairwise_de[jx - 1]
-    #         pairwise_de[jx - 1] = tmp
-
-    # loss = 0.0
-    # for i in range(len(rgb), len(pairwise_de), 2):
-    #     loss -= pairwise_de[i] / (i - len(rgb) + 1) ** 2
-
     pairwise_de = de_jab_ucs(
         jabqmsh.reshape((-1, 1, 7)), jabqmsh.reshape((1, -1, 7))
     )
     pairwise_de += np.diag(np.ones(n_colors))
 
-    loss = -np.log(pairwise_de).sum()
-    loss /= (n_colors ** 2)
+    out_loss[0] = -np.log(np.min(pairwise_de))
+    # loss -= 0.5 * loss * np.mean(np.log(1 + pairwise_de))
 
-    # scale adjustment factor to make loss sorta n_colors neutral
-    # loss /= np.log(len(rgb))
+    j_loss = hinge_loss(jabqmsh[..., 0], j_min, j_max, j_alpha).sum()
+    out_loss[1] = j_loss
 
-    j_loss = hinge_loss(jabqmsh[..., 0], j_min, j_max, j_alpha)
-    loss += j_loss.sum()
-
-    m_loss = hinge_loss(jabqmsh[..., 4], m_min, m_max, m_alpha)
-    loss += m_loss.sum()
+    m_loss = hinge_loss(jabqmsh[..., 4], m_min, m_max, m_alpha).sum()
+    out_loss[2] = m_loss
 
     de_loss = hinge_loss(
         de_jab_ucs(background_jab, jabqmsh), de_min, de_max, de_alpha
-    )
-    loss += de_loss.sum()
+    ).sum()
+    out_loss[3] = de_loss
 
     # print(de_jab_ucs(background_jab, jabqmsh))
     # print(np.vstack((j_loss, m_loss, de_loss)))
 
     out_jab[:] = jabqmsh[..., :3]
-    return loss
+
+    return out_loss.sum()
 
 
 def save_cam_grid(view_spec: ViewingSpec) -> None:
@@ -274,7 +265,6 @@ class ColorScheme:
 
         all_colors = {}
         for name, spec in self.p_specs.items():
-            print(f"Solving palette {name}")
             all_colors[name] = spec.solve_in_context(self.bg_hex, self.vs)
 
         return all_colors
@@ -368,8 +358,27 @@ class ColorScheme:
         for ax in [axl, axp]:
             ax.set_facecolor(self.bg_hex)
 
-        plt.title(f"{self.name} color scheme colors.")
+        plt.suptitle(f"{self.name} color scheme colors.")
         plt.show()
+
+    def format_colors(self) -> str:
+        html = HTML()
+
+        with html as h:
+            with h.table() as t:
+                for key, colors in self.colors_dict.items():
+                    with t.tr() as row:
+                        for cx, color in enumerate(colors):
+                            name = f"{key.upper()}{cx:02d}"
+                            with row.td(
+                                style=f"background:{color.hex};"
+                            ) as cell:
+                                print(name)
+                                with cell.br():
+                                    pass
+                                print(color.hex.upper())
+
+        return str(html)
 
     @property
     def is_dark(self) -> bool:
@@ -379,46 +388,57 @@ class ColorScheme:
 if __name__ == "__main__":
 
     np.set_printoptions(precision=2, suppress=True)
-
     bg_hex = "#E8E8E8"
-    specs = [
-        light_bgs := PaletteSpec(
-            name="BGL",
-            n_colors=8,
-            m_hinge=HingeSpec(0, 10, 0.1),
-            j_hinge=HingeSpec(0.80, 0.95, 3.0),
-            de_hinge=HingeSpec(0.00, 0.15, 10.0),
-        ),
-        primaries := PaletteSpec(
-            name="PRI",
-            n_colors=16,
-            m_hinge=HingeSpec(15, 50, 0.1),
-            j_hinge=HingeSpec(0.45, 0.60, 3.0),
-            de_hinge=HingeSpec(0.3, 2.0, 10.0),
-        ),
-        secondaries := PaletteSpec(
-            name="SND",
-            n_colors=8,
-            m_hinge=HingeSpec(0, 10, 0.1),
-            j_hinge=HingeSpec(0.65, 0.75, 3.0),
-            de_hinge=HingeSpec(0.20, 0.7, 10.0),
-        ),
-        highlights := PaletteSpec(
-            name="HL",
-            n_colors=6,
-            m_hinge=HingeSpec(15, 25, 0.1),
-            j_hinge=HingeSpec(0.75, 0.85, 3.0),
-            de_hinge=HingeSpec(0.20, 0.20, 10.0),
-        ),
-    ]
 
-    spec_dict = {ps.name: ps for ps in specs}
+    do_fit: bool = False
+    if do_fit:
+        specs = [
+            light_bgs := PaletteSpec(
+                name="BGL",
+                n_colors=6,
+                m_hinge=HingeSpec(2, 7, 0.2),
+                j_hinge=HingeSpec(0.875, 0.925, 3.0),
+                de_hinge=HingeSpec(0.05, 0.15, 10.0),
+            ),
+            primaries := PaletteSpec(
+                name="PRI",
+                n_colors=12,
+                m_hinge=HingeSpec(12, 35, 0.5),
+                j_hinge=HingeSpec(0.35, 0.65, 5.0),
+                de_hinge=HingeSpec(0.40, 0.80, 10.0),
+            ),
+            secondaries := PaletteSpec(
+                name="SND",
+                n_colors=8,
+                m_hinge=HingeSpec(0, 8, 0.1),
+                j_hinge=HingeSpec(0.60, 0.75, 3.0),
+                de_hinge=HingeSpec(0.30, 0.40, 10.0),
+            ),
+            highlights := PaletteSpec(
+                name="HL",
+                n_colors=6,
+                m_hinge=HingeSpec(10.0, 15.0, 0.25),
+                j_hinge=HingeSpec(0.80, 0.85, 5.0),
+                de_hinge=HingeSpec(0.20, 0.20, 2.0),
+            ),
+        ]
 
-    scheme = ColorScheme(
-        "Restraint",
-        bg_hex,
-        vs=NIGHT_VIEW_LIGHT,
-        palettes=spec_dict,
-    )
+        spec_dict = {ps.name: ps for ps in specs}
 
-    scheme.draw_cone()
+        scheme = ColorScheme(
+            "Restraint",
+            bg_hex,
+            vs=NIGHT_VIEW_LIGHT,
+            palettes=spec_dict,
+        )
+
+        with open("scheme_1.p", "wb") as f:
+            pickle.dump(scheme, f)
+
+    else:
+        with open("scheme_1.p", "rb") as f:
+            scheme = pickle.load(f)
+    # scheme.draw_cone()
+    # scheme.draw_colors()
+    out = scheme.format_colors()
+    print(out, file=open("../examples/example_scheme.html", "w"))

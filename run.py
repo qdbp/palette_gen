@@ -1,8 +1,8 @@
 import pickle
 
-from palette_gen.base_colors import (
-    N_BRIGHT, N_CFUL, dump_color_scheme, solve_uniform_color_grid, )
-from palette_gen.palette import ColorScheme
+from palette_gen.palette_solver import (
+    ColorScheme, N_BRIGHT, N_CFUL, dump_color_scheme,
+    solve_uniform_color_grid, )
 
 Exuberance = ColorScheme(
     name="Exuberance",

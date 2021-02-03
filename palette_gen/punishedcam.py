@@ -6,7 +6,7 @@ Evgeny Naumov, 2020
 
 import numpy as np
 from colour import XYZ_to_CIECAM02
-from numba import njit, prange
+from numba import njit
 
 from palette_gen.fastcolors import (
     XYZ_D65,

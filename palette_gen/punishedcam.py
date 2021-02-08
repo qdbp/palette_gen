@@ -13,8 +13,8 @@ from palette_gen.fastcolors import (
     XYZ_to_xyY_jit,
     atan2_360,
     cos_deg,
-    sRGB_to_XYZ_jit,
     sin_deg,
+    sRGB_to_XYZ_jit,
     xyY_E,
     xyY_to_XYZ_jit,
 )
@@ -68,7 +68,7 @@ def matmul_last_axis(mat: np.ndarray, vecs: np.ndarray) -> np.ndarray:
 
 # noinspection PyPep8Naming
 @njit  # type: ignore
-def XYZ_to_PunishedCAM20_JabQMsh_jit(
+def XYZ_to_PUNISHEDCAM_JabQMsh_jit(
     # no defaults -- perfection of bust!
     XYZ: np.ndarray,
     XYZr: np.ndarray,
@@ -310,7 +310,7 @@ def XYZ_to_PunishedCAM20_JabQMsh_jit(
 
 # noinspection PyPep8Naming
 @njit  # type: ignore
-def de_jab_ucs(jab1: np.ndarray, jab2: np.ndarray) -> np.ndarray:
+def de_punished_jab(jab1: np.ndarray, jab2: np.ndarray) -> np.ndarray:
     return np.sqrt(((jab1[..., :3] - jab2[..., :3]) ** 2).sum(axis=-1))
 
 
@@ -330,7 +330,7 @@ if __name__ == "__main__":
     ref = XYZ_to_CIECAM02(xyz, XYZ_D65, L_A=5.0, Y_b=0.8)
     print(np.vstack([ref.J, ref.Q, ref.M, ref.h]).T)
 
-    out = XYZ_to_PunishedCAM20_JabQMsh_jit(
+    out = XYZ_to_PUNISHEDCAM_JabQMsh_jit(
         xyz,
         XYZ_D65,
         Lsw=1,

@@ -1,6 +1,6 @@
-import numpy as np
 import itertools
 
+import numpy as np
 from colour import (
     HSV_to_RGB,
     Lab_to_LCHab,

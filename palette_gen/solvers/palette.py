@@ -1,46 +1,19 @@
 from __future__ import annotations
 
-from argparse import Namespace
 from itertools import chain
 from math import atan2
-from os.path import splitext
 from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
-import yaml
 from matplotlib.axes import Axes
 from matplotlib.colors import to_hex, to_rgb
 from matplotlib.figure import Figure
 from matplotlib.gridspec import GridSpec
 
 from palette_gen.idiotic_html_generator import HTML
-from palette_gen.solvers import Color, ColorSolver, ViewingSpec
-from palette_gen.solvers.fixed import FixedSolver
-from palette_gen.solvers.jab_ring import JabRingSpec
-
-
-def mk_cube_surface_grid(pps: int = 20) -> np.ndarray:
-    """
-    Generates a regular grid over the surface of the {0,1}^3 corner unit cube.
-    """
-
-    base = np.linspace(1 / pps, 1 - 1 / pps, num=pps - 2)
-    edges = np.array([0.0, 1.0])
-    cube_dim = 3
-
-    return np.concatenate(  # type: ignore
-        [
-            np.stack(
-                np.meshgrid(
-                    *([base] * ix + [edges] + [base] * (cube_dim - ix - 1)),
-                    indexing="ij",
-                ),
-                axis=-1,
-            ).reshape(-1, 3)
-            for ix in range(cube_dim)
-        ],
-    )
+from palette_gen.solvers import Color, ViewingSpec
+from palette_gen.solvers.color import ColorSolver
 
 
 class PaletteSolver:
@@ -69,6 +42,30 @@ class PaletteSolver:
             )
 
         return all_colors
+
+    @staticmethod
+    def mk_cube_surface_grid(pps: int = 20) -> np.ndarray:
+        """
+        Generates a regular grid over the surface of the {0,1}^3 corner unit
+        cube.
+        """
+
+        base = np.linspace(1 / pps, 1 - 1 / pps, num=pps - 2)
+        edges = np.array([0.0, 1.0])
+        cube_dim = 3
+
+        return np.concatenate(  # type: ignore
+            [
+                np.stack(
+                    np.meshgrid(
+                        *([base] * ix + [edges] + [base] * (cube_dim - ix - 1)),
+                        indexing="ij",
+                    ),
+                    axis=-1,
+                ).reshape(-1, 3)
+                for ix in range(cube_dim)
+            ],
+        )
 
     def draw_cone(self) -> None:
         try:
@@ -101,7 +98,7 @@ class PaletteSolver:
         for cx, colors in enumerate(self.colors_dict.values()):
             symbols.extend([marker_cycle[cx]] * len(colors))
 
-        jab_edges = self.vs.rgb_to_cam(mk_cube_surface_grid())
+        jab_edges = self.vs.rgb_to_cam(self.mk_cube_surface_grid())
 
         fig = go.Figure(
             data=[
@@ -204,66 +201,9 @@ class PaletteSolver:
             ]
             for p_name, colors in self.colors_dict.items()
         }
-        out = {
-            "palette": p_dict,
-            "bg": self.vs.bg_hex,
-        }
+        out = {"palette": p_dict}
         return out
 
     @property
     def is_dark(self) -> bool:
         return sum(to_rgb(self.vs.bg_hex)) <= 1.5
-
-
-def gen_palette_cmd(args: Namespace) -> None:
-    """
-    Entrypoint into the palette generator.
-
-    Arguments defined in main.py
-    """
-
-    np.set_printoptions(precision=2, suppress=True)
-
-    with open(args.spec, "r") as f:
-        full_spec = yaml.full_load(f)
-
-    views = {
-        name: ViewingSpec(name=name, **view_args)
-        for name, view_args in full_spec["views"].items()
-    }
-
-    constructors = {"jab_ring": JabRingSpec, "fixed": FixedSolver}
-
-    palette_spec: dict[str, ColorSolver] = {
-        name: constructors[d.pop("type")].construct_from_config(  # type: ignore
-            d["args"] | {"name": name}
-        )
-        for name, d in full_spec["palette"].items()
-    }
-
-    if (out_fn := getattr(args, "out", None)) is None:
-        base, ext = splitext(args.spec)
-        out_fn = base + ".palette" + ext
-
-    out = {
-        "name": full_spec["name"],
-        "views": {},
-    }
-    for view_name, view in views.items():
-        print(f"Solving palette {view_name}...")
-        palette = PaletteSolver(
-            view_name + "_palette", vs=view, palette_spec=palette_spec
-        )
-        out["views"][view_name] = palette.serialize()
-
-        if not args.html:
-            continue
-
-        html_fn = splitext(out_fn)[0] + f".{view_name}.html"
-        with open(html_fn, "w") as f:
-            print(f"Saving html to {html_fn}")
-            f.write(palette.dump_html())
-
-    print(f"Saving palettes to {out_fn}.")
-    with open(out_fn, "w") as f:
-        yaml.dump(out, f)

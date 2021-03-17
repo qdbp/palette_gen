@@ -1,7 +1,6 @@
 name: RestraintAuto
 views:
   Day:
-    bg: '#e8e8e8'
     palette:
       bg:
       - hex: '#dae0e5'
@@ -83,7 +82,7 @@ views:
         name: tone002
       - hex: '#65372e'
         name: tone003
-      - hex: '#4e2a4b'
+      - hex: '#4e294b'
         name: tone004
       - hex: '#2c3056'
         name: tone005
@@ -101,20 +100,19 @@ views:
       - hex: '#5c0098'
         name: ult005
   Night:
-    bg: '#e8e8e8'
     palette:
       bg:
-      - hex: '#d7dee4'
+      - hex: '#ffffff'
         name: bg000
-      - hex: '#d4e1dd'
+      - hex: '#ffffff'
         name: bg001
-      - hex: '#dde2d3'
+      - hex: '#ffffff'
         name: bg002
-      - hex: '#eaddd1'
+      - hex: '#ffffff'
         name: bg003
-      - hex: '#ead9dd'
+      - hex: '#ffffff'
         name: bg004
-      - hex: '#e0dae5'
+      - hex: '#fff4ff'
         name: bg005
       greys:
       - hex: '#3f3f3f'
@@ -155,7 +153,7 @@ views:
         name: pri001
       - hex: '#296924'
         name: pri002
-      - hex: '#7a6501'
+      - hex: '#7a6500'
         name: pri003
       - hex: '#8c431a'
         name: pri004
@@ -177,7 +175,7 @@ views:
       tone:
       - hex: '#00454e'
         name: tone000
-      - hex: '#004b27'
+      - hex: '#024b28'
         name: tone001
       - hex: '#5a4d15'
         name: tone002

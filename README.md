@@ -14,9 +14,18 @@ controls to give UX professionals irreparable brain damage.
 When installed with `pip`, this repo provides a script, `palette-gen` that is
 able to:
 
-1. Go from declarative specifications of abstract palettes to concrete palettes
-2. Go from a declarative yaml specification of a Jetbrains color scheme and a
-   palette produces as above to a full .xml scheme usable by IDEA
+1. Yaml specification -> generated palette
+2. Yaml specification + generated palette -> .xml scheme for IDEA
+3. Yaml specification + generated palette -> .theme.json theme for IDEA
+
+To see this in action, run the following in the project directory:
+
+```shell
+make install
+make example
+```
+
+The above will produce output files to `out/` in the current directory.
    
 ### Palette Generation
 The input file looks something like this:
@@ -74,6 +83,25 @@ with manual changes and additions you make from the IDEA GUI.
 If you're installing the file directly and not through a theme, rename it
 to end in `.icls` because IDEA is too stupid to let you import `.xml` schemes
 directly.
+
+### IDEA Theme Generation
+
+`palette-gen theme <theme spec> <generated palette> <view name> ...`
+
+Theme generation is conceptually similar to scheme generation, with the obvious
+difference being that the specification file takes theme directives. The
+`"colors"` dict is omitted from the spec. Also, theme generation works one view at a time, so a concrete view for which
+to generate the theme needs to be given.
+
+The `"colors"` dict is no specified in the spec, and is normally generated
+from the palette. However, if `--inline-colors` is passed, all palette
+colors will be inlined and there will be no `"colors"` section in the produced
+`.theme.json`.
+
+
+### IDEA Theme generation
+
+
 
 ## Internals (Nerd Shit)
 

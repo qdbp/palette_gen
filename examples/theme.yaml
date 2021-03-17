@@ -1,0 +1,83 @@
+meta:
+    name: Salmon
+    author: Evgeny Naumov
+    dark: false
+    scheme: Restraint
+ui:
+    Borders:
+        color: tone003
+    "*":
+        background: salmon
+        foreground: fg
+
+        startBackground: salmon_hl
+        endBackground: salmon
+
+        disabledBackground: salmon_dark
+        selectionInactiveBackground: salmon_dark
+        inactiveColoredFileBackground: salmon_dark
+        inactiveColoredTabBackground: salmon_dark
+        focusCellBackground: salmon_dark
+
+        selectedBackground: salmon_hl
+        LightEditBackground: salmon_hl
+        translucentBackground: salmon_hl
+        activeBackground: salmon_hl
+
+        inactiveBackground: salmon
+        inactiveForeground: fg
+
+        nonEditableBackground: salmon
+
+        startBorderColor: snd002
+        endBorderColor: snd002
+
+        acceleratorForeground: black
+        acceleratorSelectionForeground: black
+
+        highlight: black
+        selectHighlight: black
+
+        iconColor: fg
+        disabledIconDolor: fg_light
+
+        selectionInactiveForeground: fg_light
+
+        selectedForeground: fg
+
+        selectionBackground: salmon_hl
+        selectionForeground: black
+
+        lightSelectionForeground: black
+        lightSelectionBackground: salmon_hl
+
+        hoverForeground: black
+        hoverBackground: salmon_hl
+
+        disabledForeground: fg_disabled
+        disabledText: fg_disabled
+
+        FileColor:
+            Blue: hl000
+            Green: hl002
+            Orange: hl004
+            Yellow: hl003
+            Rose: hl005
+
+icons:
+    ColorPalette:
+        Objects.Grey: fg
+        Objects.Red: pri005
+        Objects.Pink: pri005
+        Objects.BlackText: white
+        Objects.Blue: pri000
+        Objects.Yellow: pri004
+        Objects.YellowDark: pri003
+        Objects.Green: pri002
+        Objects.GreenAndroid: pri002
+        Objects.RedStatus: ult004
+        Objects.Purple: pri006
+        Actions.Blue: ult000
+        Actions.Green: ult002
+        Actions.Red: ult004
+        Actions.Yellow: ult003

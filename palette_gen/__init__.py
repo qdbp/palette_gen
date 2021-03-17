@@ -1,12 +1,17 @@
 import sys
 from argparse import ArgumentParser
 
-from palette_gen.jb_scheme import JBScheme
-from palette_gen.palette_solver import gen_palette_cmd
+from palette_gen.processors.jb_scheme import JBScheme
+from palette_gen.processors.jb_theme import process_theme
+from palette_gen.processors.yaml_palette import gen_palette_cmd
 
 
 def main() -> None:
     parser = ArgumentParser()
+    parser.add_argument(
+        "--out", help="output file name. format depends on command.", type=str
+    )
+
     sub = parser.add_subparsers(
         description="subcommands",
         required=True,
@@ -18,9 +23,6 @@ def main() -> None:
     sub_palette = sub.add_parser("palette", help="solve for palette colors")
     sub_palette.add_argument("spec", help="palette spec yaml config", type=str)
     sub_palette.add_argument(
-        "--out", help="Save palette output to this file", type=str
-    )
-    sub_palette.add_argument(
         "--html",
         help="generate an html file showing the colors",
         action="store_true",
@@ -31,14 +33,30 @@ def main() -> None:
     sub_scheme = sub.add_parser(
         "scheme", help="create a colorscheme from a template"
     )
-    sub_scheme.add_argument("spec", help="scheme spec config, yaml", type=str)
     sub_scheme.add_argument(
-        "palette", help="generated palette scheme, yaml", type=str
+        "spec", help="scheme spec config file, yaml", type=str
     )
     sub_scheme.add_argument(
-        "--out", help="save scheme output to this file", type=str
+        "palette", help="generated palette scheme file, yaml", type=str
     )
     sub_scheme.set_defaults(cmd=JBScheme.process_config)
+
+    sub_theme = sub.add_parser(
+        "theme", help="create a .theme.json from a template"
+    )
+    sub_theme.add_argument(
+        "spec", help="theme spec config file, yaml", type=str
+    )
+    sub_theme.add_argument(
+        "palette", help="generated palette scheme file, yaml", type=str
+    )
+    sub_theme.add_argument("view", help="view name to use", type=str)
+    sub_theme.add_argument(
+        "--inline-colors",
+        help='inline all colors and omit the "colors" dict',
+        action="store_true",
+    )
+    sub_theme.set_defaults(cmd=process_theme)
 
     args = parser.parse_args()
     args.cmd(args)

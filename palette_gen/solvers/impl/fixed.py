@@ -2,7 +2,8 @@ from typing import Iterable, Type
 
 from matplotlib.colors import to_rgb
 
-from palette_gen.solvers import Color, ColorSolver, T, ViewingSpec
+from palette_gen.solvers import Color, T, ViewingSpec
+from palette_gen.solvers.color import ColorSolver
 
 
 class FixedSolver(ColorSolver):

@@ -19,6 +19,8 @@ from xml.etree.ElementTree import Element, SubElement, tostring
 
 import yaml
 
+from palette_gen.processors import ConcretePaletteViewSet
+
 
 def strip_hex(s: str) -> str:
     return s.lstrip("#")
@@ -139,14 +141,18 @@ class XMLSerializable:
         pass
 
 
+# TODO move to schema
+COLOR_KEYS = {"fg", "bg", "effect_color", "stripe"}
+
+
 @dataclass()
 class JBAttrSpec(XMLSerializable):
     name: str
 
     fg: Opt[str] = None  # rgb hex
     bg: Opt[str] = None  # rgb hex
-    ft: Opt[int] = None
-    effect: Opt[int] = None
+    ft: Opt[str] = None
+    effect: Opt[str] = None
     effect_color: Opt[str] = None  # rgb hex
     stripe: Opt[str] = None  # rgb hex
     base: Opt[str] = None
@@ -165,13 +171,13 @@ class JBAttrSpec(XMLSerializable):
             if self.bg is not None:
                 xmlb.e.option(name="BACKGROUND", value=jb_hex(self.bg))
             if self.ft is not None:
-                xmlb.e.option(name="FONT_TYPE", value=str(self.ft))
+                xmlb.e.option(name="FONT_TYPE", value=self.ft)
             if self.stripe is not None:
                 xmlb.e.option(
                     name="ERROR_STRIPE_COLOR", value=jb_hex(self.stripe)
                 )
             if self.effect is not None:
-                xmlb.e.option(name="EFFECT_TYPE", value=str(self.effect))
+                xmlb.e.option(name="EFFECT_TYPE", value=self.effect)
             if self.effect_color is not None:
                 xmlb.e.option(
                     name="EFFECT_COLOR", value=jb_hex(self.effect_color)
@@ -194,7 +200,6 @@ class JBAtomicOption(XMLSerializable):
 
 @dataclass()
 class JBColorSpec(XMLSerializable):
-
     options: Iterable[JBAtomicOption]
 
     def to_xml(self) -> Element:
@@ -206,7 +211,6 @@ class JBColorSpec(XMLSerializable):
 
 @dataclass()
 class JBFontSpec:
-
     font_scale: float = 1.0
     line_spacing: float = 0.9
     editor_font_size: float = 14.0
@@ -274,24 +278,23 @@ class JBScheme(XMLSerializable):
         font = JBFontSpec(**scheme["font"])
 
         with open(args.palette, "r") as f:
-            raw_palette = yaml.full_load(f)
+            view_set = ConcretePaletteViewSet.from_config(yaml.full_load(f))
 
-        name = raw_palette["name"]
-        print(f"Generating schemes for {name}")
+        print(f"Generating schemes for {view_set.name}")
 
-        for view_name, view in raw_palette["views"].items():
-            color_map = {}
-            for palette_name, palette in view["palette"].items():
-                for item in palette:
-                    color_map[item["name"]] = item["hex"]
+        for view_name, palette in view_set.view_map.items():
 
             color_spec = JBColorSpec(
-                JBAtomicOption(key, color_map.get(val, val))
+                JBAtomicOption(key, palette.subs(val))
                 for key, val in scheme["colors"].items()
             )
             attrs = [
                 JBAttrSpec(
-                    name=key, **{k: color_map.get(v, v) for k, v in val.items()}
+                    name=key,
+                    **{
+                        k: palette.subs(v) if v in COLOR_KEYS else str(v)
+                        for k, v in val.items()
+                    },
                 )
                 for key, val in scheme["attributes"].items()
             ]
@@ -304,7 +307,7 @@ class JBScheme(XMLSerializable):
             )
 
             root = jb_scheme.to_xml()
-            dom: str = minidom.parsestring(tostring(root)).toprettyxml(
+            dom: str = minidom.parseString(tostring(root)).toprettyxml(
                 indent="  "
             )
             dom = dom[dom.index("\n") + 1 :]

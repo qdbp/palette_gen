@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from functools import cached_property
-from typing import Any, Iterable, Optional, Type, TypeVar, cast
+from typing import Optional, TypeVar, cast
 
 import numpy as np
 from matplotlib.colors import to_hex
@@ -74,25 +73,3 @@ class Color:
             f"Color{f'({self.name})' if self.name else ''}"
             f"[#{to_hex(self.rgb)}/{self.vs.name}]"
         )
-
-
-class ColorSolver(ABC):
-    """
-    Abstract base class for objects capable of solving for a list of colors
-    from a background color ViewingSpec, based on some desiderata.
-    """
-
-    @abstractmethod
-    def solve_for_context(
-        self, bg_hex: str, vs: ViewingSpec
-    ) -> Iterable[Color]:
-        """
-        Solves for a set of colors based on a viewing spec.
-        """
-
-    @classmethod
-    @abstractmethod
-    def construct_from_config(cls: Type[T], conf: dict[str, Any]) -> T:
-        """
-        Constructs the spec from the yaml configuration.
-        """

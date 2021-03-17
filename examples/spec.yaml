@@ -18,13 +18,14 @@ palette:
         args:
             black: "#000000"
             white: "#ffffff"
+            fg: "#3f3f3f"
             fg_grey: "#3f3f3f"
             fg_light: "#808080"
             bg_grey: "#e8e8e8"
             bg_grey_dark: "#d9d9d9"
             salmon_dark: "#CCBCAD"
             salmon: "#F2DFCE"
-            salmon_light: "#FFF1E4"
+            salmon_hl: "#FFF1E4"
     ult:
         type: jab_ring
         args:

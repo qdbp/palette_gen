@@ -11,7 +11,8 @@ from palette_gen.fastcolors import sRGB_to_XYZ_jit  # type: ignore
 from palette_gen.punishedcam import (  # type: ignore
     XYZ_to_PUNISHEDCAM_JabQMsh_jit,
 )
-from palette_gen.solvers import Color, ColorSolver, T, ViewingSpec
+from palette_gen.solvers import Color, T, ViewingSpec
+from palette_gen.solvers.color import ColorSolver
 
 
 @dataclass()

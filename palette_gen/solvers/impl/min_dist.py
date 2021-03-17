@@ -13,7 +13,8 @@ from palette_gen.punishedcam import (  # type: ignore
     XYZ_to_PUNISHEDCAM_JabQMsh_jit,
     de_punished_jab,
 )
-from palette_gen.solvers import Color, ColorSolver, T, ViewingSpec
+from palette_gen.solvers import Color, T, ViewingSpec
+from palette_gen.solvers.color import ColorSolver
 
 
 @dataclass(frozen=True, order=True)

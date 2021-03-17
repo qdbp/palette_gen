@@ -1,1 +1,4 @@
-/palette_gen/.ipynb_checkpoints/
+.ipynb_checkpoints/
+**/.pytest_cache
+.mypy_cache
+.venv

@@ -40,6 +40,7 @@ class HTML:
     def __enter__(self) -> HTML:
 
         sys.stdout = self.out
+
         # noinspection PyUnusedLocal
         def _print(*args: Any, end: str = "", **kwargs: Any) -> None:
             self.out.write("\n")
@@ -47,7 +48,8 @@ class HTML:
             self.out.write(*args)
             self.out.write(end)
 
-        builtins.print = _print
+        # noinspection PyTypeHints
+        builtins.print = _print  # type: ignore
 
         attr_string = " ".join(f'{k}="{v}"' for k, v in self.atts.items())
         self.out.write(
@@ -64,15 +66,3 @@ class HTML:
 
     def __str__(self) -> str:
         return self.out.getvalue()
-
-
-if __name__ == "__main__":
-    with (html := HTML(meta="foo")) as h:
-        with h.p(style="font-size:20;") as p:
-            print("HAHAHAH")
-            with p.a(href="http://foobar.io"):
-                print("CLICK HERE!!!")
-            with p.b():
-                print("FOR REAL")
-
-    print(str(html))

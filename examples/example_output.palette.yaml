@@ -1,0 +1,202 @@
+name: RestraintAuto
+views:
+  Day:
+    bg: '#e8e8e8'
+    palette:
+      bg:
+      - hex: '#dae0e5'
+        name: bg000
+      - hex: '#d8e3e0'
+        name: bg001
+      - hex: '#dee3d8'
+        name: bg002
+      - hex: '#e9dfd6'
+        name: bg003
+      - hex: '#e9dcdf'
+        name: bg004
+      - hex: '#e1dde5'
+        name: bg005
+      greys:
+      - hex: '#3f3f3f'
+        name: fg_grey
+      - hex: '#808080'
+        name: fg_light
+      - hex: '#d9d9d9'
+        name: bg_grey_dark
+      - hex: '#e8e8e8'
+        name: bg_grey
+      - hex: '#ffffff'
+        name: white
+      - hex: '#000000'
+        name: black
+      - hex: '#ccbcad'
+        name: salmon_dark
+      - hex: '#fff1e4'
+        name: salmon_light
+      - hex: '#f2dfce'
+        name: salmon
+      hl:
+      - hex: '#b5c8d8'
+        name: hl000
+      - hex: '#aed0c8'
+        name: hl001
+      - hex: '#c4d2b1'
+        name: hl002
+      - hex: '#e3c7ac'
+        name: hl003
+      - hex: '#e2bcc6'
+        name: hl004
+      - hex: '#cbbfd9'
+        name: hl005
+      pri:
+      - hex: '#005872'
+        name: pri000
+      - hex: '#00695b'
+        name: pri001
+      - hex: '#3c6d35'
+        name: pri002
+      - hex: '#7d6d27'
+        name: pri003
+      - hex: '#8b4e2c'
+        name: pri004
+      - hex: '#7f374f'
+        name: pri005
+      - hex: '#613272'
+        name: pri006
+      - hex: '#393f7c'
+        name: pri007
+      snd:
+      - hex: '#798280'
+        name: snd000
+      - hex: '#868379'
+        name: snd001
+      - hex: '#887c7f'
+        name: snd002
+      - hex: '#7d7e84'
+        name: snd003
+      tone:
+      - hex: '#00434b'
+        name: tone000
+      - hex: '#234f33'
+        name: tone001
+      - hex: '#5e5427'
+        name: tone002
+      - hex: '#65372e'
+        name: tone003
+      - hex: '#4e2a4b'
+        name: tone004
+      - hex: '#2c3056'
+        name: tone005
+      ult:
+      - hex: '#005b94'
+        name: ult000
+      - hex: '#00816f'
+        name: ult001
+      - hex: '#517800'
+        name: ult002
+      - hex: '#a25900'
+        name: ult003
+      - hex: '#890044'
+        name: ult004
+      - hex: '#5c0098'
+        name: ult005
+  Night:
+    bg: '#e8e8e8'
+    palette:
+      bg:
+      - hex: '#d7dee4'
+        name: bg000
+      - hex: '#d4e1dd'
+        name: bg001
+      - hex: '#dde2d3'
+        name: bg002
+      - hex: '#eaddd1'
+        name: bg003
+      - hex: '#ead9dd'
+        name: bg004
+      - hex: '#e0dae5'
+        name: bg005
+      greys:
+      - hex: '#3f3f3f'
+        name: fg_grey
+      - hex: '#808080'
+        name: fg_light
+      - hex: '#d9d9d9'
+        name: bg_grey_dark
+      - hex: '#e8e8e8'
+        name: bg_grey
+      - hex: '#ffffff'
+        name: white
+      - hex: '#000000'
+        name: black
+      - hex: '#fff1e4'
+        name: salmon_light
+      - hex: '#ccbcad'
+        name: salmon_dark
+      - hex: '#f2dfce'
+        name: salmon
+      hl:
+      - hex: '#aec5da'
+        name: hl000
+      - hex: '#a5cfc5'
+        name: hl001
+      - hex: '#c0d1a8'
+        name: hl002
+      - hex: '#e5c2a1'
+        name: hl003
+      - hex: '#e5b6c2'
+        name: hl004
+      - hex: '#c9bbdb'
+        name: hl005
+      pri:
+      - hex: '#005b78'
+        name: pri000
+      - hex: '#006d5d'
+        name: pri001
+      - hex: '#296924'
+        name: pri002
+      - hex: '#7a6501'
+        name: pri003
+      - hex: '#8c431a'
+        name: pri004
+      - hex: '#802949'
+        name: pri005
+      - hex: '#612377'
+        name: pri006
+      - hex: '#323586'
+        name: pri007
+      snd:
+      - hex: '#727d7a'
+        name: snd000
+      - hex: '#817e71'
+        name: snd001
+      - hex: '#847679'
+        name: snd002
+      - hex: '#777880'
+        name: snd003
+      tone:
+      - hex: '#00454e'
+        name: tone000
+      - hex: '#004b27'
+        name: tone001
+      - hex: '#5a4d15'
+        name: tone002
+      - hex: '#642e23'
+        name: tone003
+      - hex: '#4d1f4b'
+        name: tone004
+      - hex: '#25295a'
+        name: tone005
+      ult:
+      - hex: '#005d9f'
+        name: ult000
+      - hex: '#008571'
+        name: ult001
+      - hex: '#4f7c00'
+        name: ult002
+      - hex: '#a85a00'
+        name: ult003
+      - hex: '#950049'
+        name: ult004
+      - hex: '#6400a6'
+        name: ult005

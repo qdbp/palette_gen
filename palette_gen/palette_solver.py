@@ -1,32 +1,23 @@
 from __future__ import annotations
 
-import pickle
-from dataclasses import astuple, dataclass
-from functools import cached_property
+from argparse import Namespace
 from itertools import chain
 from math import atan2
-from typing import cast
+from os.path import splitext
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
-from idiotic_html_generator import HTML
+import yaml
 from matplotlib.axes import Axes
 from matplotlib.colors import to_hex, to_rgb
 from matplotlib.figure import Figure
 from matplotlib.gridspec import GridSpec
-from numba import njit
-from scipy.optimize import minimize
-from scipy.special import expit
 
-from palette_gen.fastcolors import (
-    cct_to_D_xyY_jit,
-    sRGB_to_XYZ_jit,
-    xyY_to_XYZ_jit,
-)
-from palette_gen.punishedcam import (
-    XYZ_to_PUNISHEDCAM_JabQMsh_jit,
-    de_punished_jab,
-)
+from palette_gen.idiotic_html_generator import HTML
+from palette_gen.solvers import Color, ColorSolver, ViewingSpec
+from palette_gen.solvers.fixed import FixedSolver
+from palette_gen.solvers.jab_ring import JabRingSpec
 
 
 def mk_cube_surface_grid(pps: int = 20) -> np.ndarray:
@@ -38,7 +29,7 @@ def mk_cube_surface_grid(pps: int = 20) -> np.ndarray:
     edges = np.array([0.0, 1.0])
     cube_dim = 3
 
-    return np.concatenate(
+    return np.concatenate(  # type: ignore
         [
             np.stack(
                 np.meshgrid(
@@ -52,233 +43,38 @@ def mk_cube_surface_grid(pps: int = 20) -> np.ndarray:
     )
 
 
-@dataclass(frozen=True, order=True)
-class Color:
-    rgb: tuple[float, float, float]
-    vs: ViewingSpec
-
-    @cached_property
-    def jab(self) -> np.ndarray:
-        return self.vs.xyz_to_cam(self.vs.rgb_to_xyz(np.array(self.rgb)))[0, :3]
-
-    @cached_property
-    def hex(self) -> str:
-        return cast(str, to_hex(self.rgb))
-
-
-@dataclass()
-class ViewingSpec:
-    name: str
-    T: float  # K
-    Lsw: float  # cdm-2
-    Lb: float  # cdm-2
-    Lmax: float  # cdm-2
-
-    # noinspection PyPep8Naming
-    @property
-    def XYZw(self) -> np.ndarray:
-        return xyY_to_XYZ_jit(cct_to_D_xyY_jit(self.T))
-
-    # TODO should be customizable based on additional fields
-    # noinspection PyMethodMayBeStatic
-    def rgb_to_xyz(self, rgb: np.ndarray) -> np.ndarray:
-        return sRGB_to_XYZ_jit(rgb.reshape((-1, 3)))
-
-    def xyz_to_cam(self, xyz: np.ndarray) -> np.ndarray:
-        return XYZ_to_PUNISHEDCAM_JabQMsh_jit(
-            xyz,
-            self.XYZw.reshape(1, -1),
-            Lsw=self.Lsw,
-            Lb=self.Lb,
-            Lmax=self.Lmax,
-        )
-
-    def rgb_to_cam(self, rgb: np.ndarray) -> np.ndarray:
-        return self.xyz_to_cam(self.rgb_to_xyz(rgb)).squeeze()
-
-
-# TODO the hinge spec can be generalized to include more general polygonal
-# regions
-
-
-@dataclass(frozen=True, order=True)
-class HingeSpec:
-    min: float
-    max: float
-    alpha: float = 1.0
-
-
-@dataclass
-class PaletteSpec:
-    name: str
-    n_colors: int
-
-    m_hinge: HingeSpec
-    j_hinge: HingeSpec
-    de_hinge: HingeSpec
-    hue_gap_hinge: HingeSpec
-
-    def solve_in_context(self, bg_rgb: str, vs: ViewingSpec) -> list[Color]:
-
-        print(f"Solving palette {self.name}...")
-
-        rgb = np.random.normal(size=(self.n_colors, 3)).ravel()
-        out_jab = np.zeros((self.n_colors, 3))
-
-        bg_jab = XYZ_to_PUNISHEDCAM_JabQMsh_jit(
-            sRGB_to_XYZ_jit(np.array(to_rgb(bg_rgb)).reshape(-1, 3)),
-            vs.XYZw,
-            vs.Lsw,
-            vs.Lb,
-            vs.Lmax,
-        )
-
-        out_loss = np.zeros(5)
-        res = minimize(
-            palette_loss,
-            rgb,
-            args=(
-                out_jab,
-                out_loss,
-                vs.XYZw,
-                vs.Lsw,
-                vs.Lb,
-                vs.Lmax,
-                bg_jab,
-                *astuple(self.j_hinge),
-                *astuple(self.m_hinge),
-                *astuple(self.de_hinge),
-                *astuple(self.hue_gap_hinge),
-            ),
-        )
-
-        loss_names = ["min(d)", "J", "M", "ΔE", "Δh"]
-        print(f"loss: ", end="")
-        for name, val in zip(loss_names, out_loss):
-            print(f"{name}={val:.3f}; ", end="")
-        print("")
-
-        # noinspection PyTypeChecker
-        return sorted(
-            Color(rgb=tuple(expit(rgb)), vs=vs)
-            for rgb in res["x"].reshape((-1, 3))
-        )
-
-
-NIGHT_VIEW_LIGHT = ViewingSpec("night_light", T=6500, Lsw=1, Lmax=15, Lb=8)
-DAY_VIEW_LIGHT = ViewingSpec("day_light", T=6500, Lsw=100, Lmax=60, Lb=40)
-
-
-@njit  # type: ignore
-def hinge_loss(arr: np.ndarray, lb: float, ub: float, α: float) -> np.ndarray:
-    flat_arr = arr.ravel()
-    out = np.zeros_like(flat_arr)
-
-    for ix in range(len(flat_arr)):
-        item = flat_arr[ix]
-        if item > ub:
-            out[ix] = α * (item - ub)
-        elif item < lb:
-            out[ix] = α * (lb - item)
-
-    return out.reshape(arr.shape)
-
-
-# noinspection PyPep8Naming
-@njit  # type: ignore
-def palette_loss(
-    logit_rgb: np.ndarray,
-    out_jab: np.ndarray,
-    out_loss: np.ndarray,
-    xyz_r: np.ndarray,
-    Lsw: float,
-    Lb: float,
-    Lmax: float,
-    background_jab: np.ndarray,
-    j_min: float,
-    j_max: float,
-    j_alpha: float,
-    m_min: float,
-    m_max: float,
-    m_alpha: float,
-    de_min: float,
-    de_max: float,
-    de_alpha: float,
-    hg_min: float,
-    hg_max: float,
-    hg_alpha: float,
-) -> float:
-
-    rgb = (1 / (1 + np.exp(-logit_rgb))).reshape((-1, 3))
-    n_colors = len(rgb)
-
-    jabqmsh = XYZ_to_PUNISHEDCAM_JabQMsh_jit(
-        sRGB_to_XYZ_jit(rgb), xyz_r, Lsw=Lsw, Lb=Lb, Lmax=Lmax
-    )
-    out_jab[:] = jabqmsh[..., :3]
-
-    pairwise_de = de_punished_jab(
-        jabqmsh.reshape((-1, 1, 7)), jabqmsh.reshape((1, -1, 7))
-    )
-    pairwise_de += np.diag(np.ones(n_colors))
-
-    # calculate hue gaps
-    hues = np.zeros(n_colors)
-    hues[:] = jabqmsh[:, -1] / 360
-    # insertion sort lol 'cause .sort ain't implemented
-    i = 1
-    while i < n_colors:
-        j = i
-        while j > 0 and hues[j - 1] > hues[j]:
-            hues[j], hues[j - 1] = hues[j - 1], hues[j]
-            j -= 1
-        i += 1
-
-    hg = np.zeros((1,))
-    for i in range(n_colors - 1):
-        hg[0] = max(hg[0], hues[i + 1] - hues[i])
-    hg[0] = max(hg[0], hues[0] + 1 - hues[-1])
-
-    out_loss[0] = -np.log(np.min(pairwise_de))
-    out_loss[1] = hinge_loss(jabqmsh[..., 0], j_min, j_max, j_alpha).mean()
-    out_loss[2] = hinge_loss(jabqmsh[..., 4], m_min, m_max, m_alpha).mean()
-    out_loss[3] = hinge_loss(
-        de_punished_jab(background_jab, jabqmsh), de_min, de_max, de_alpha
-    ).mean()
-    # rescale the hue loss to have the same relative weight independent of
-    out_loss[4] = hinge_loss(hg, hg_min, hg_max, hg_alpha).mean()
-
-    return out_loss.sum()
-
-
-class ColorScheme:
+class PaletteSolver:
     def __init__(
         self,
         name: str,
-        bg_hex: str,
         vs: ViewingSpec,
-        palettes: dict[str, PaletteSpec],
-    ):
+        palette_spec: dict[str, ColorSolver],
+    ) -> None:
         self.name = name
-        self.bg_hex = bg_hex
         self.vs = vs
-        self.p_specs = palettes
+        self.p_specs = palette_spec
 
-        self.colors_dict = {
+        self.colors_dict: dict[str, list[Color]] = {
             k: sorted(v, key=lambda x: atan2(x.jab[1], x.jab[2]))
-            for k, v in self.solve().items()
+            for k, v in self._solve().items()
         }
 
-    def solve(self) -> dict[str, list[Color]]:
+    def _solve(self) -> dict[str, list[Color]]:
 
         all_colors = {}
         for name, spec in self.p_specs.items():
-            all_colors[name] = spec.solve_in_context(self.bg_hex, self.vs)
+            # noinspection PyTypeChecker
+            all_colors[name] = sorted(
+                spec.solve_for_context(self.vs.bg_hex, self.vs)
+            )
 
         return all_colors
 
     def draw_cone(self) -> None:
-        import plotly.graph_objects as go
+        try:
+            import plotly.graph_objects as go
+        except ImportError as e:
+            raise RuntimeError("Drawing the cone requires plotly.") from e
 
         marker_cycle = [
             "circle",
@@ -364,100 +160,110 @@ class ColorScheme:
 
         axl.set_xlim(-1, 2.5)
         for ax in [axl, axp]:
-            ax.set_facecolor(self.bg_hex)
+            ax.set_facecolor(self.vs.bg_hex)
 
         plt.suptitle(f"{self.name} color scheme colors.")
         plt.show()
 
-    def format_colors(self) -> str:
+    def dump_html(self) -> str:
         html = HTML()
 
         with html as h:
-            with h.table() as t:
-                for key, colors in self.colors_dict.items():
-                    with t.tr() as row:
-                        for cx, color in enumerate(colors):
-                            name = f"{key.upper()}{cx:02d}"
-                            if sum(color.rgb) > 1.5:
-                                fc = "black"
-                            else:
-                                fc = "white"
-                            with row.td(
-                                style=f"background:{color.hex};color:{fc};"
-                            ) as cell:
-                                print(name)
-                                with cell.br():
-                                    pass
-                                print(color.hex.upper())
+            with h.body(style=f"background-color:{self.vs.bg_hex};") as b:  # type: ignore
+                with b.table() as t:
+                    for key, colors in self.colors_dict.items():
+                        with t.tr() as row:
+                            for cx, color in enumerate(colors):
+                                seq_name = f"{key.upper()}{cx:02d}"
+                                if sum(color.rgb) > 1.5:
+                                    fc = "black"
+                                else:
+                                    fc = "white"
+                                with row.td(
+                                    style=f"background:{color.hex};color:{fc};"
+                                ) as cell:
+                                    print(seq_name)
+                                    if color.name is not None:
+                                        with cell.br():
+                                            pass
+                                        print(color.name)
+                                    with cell.br():
+                                        pass
+                                    print(color.hex.upper())
 
         return str(html)
 
+    def serialize(self) -> dict[str, Any]:
+        p_dict = {
+            p_name: [
+                {
+                    "name": f"{p_name}{cx:03d}" if c.name is None else c.name,
+                    "hex": c.hex,
+                }
+                for cx, c in enumerate(colors)
+            ]
+            for p_name, colors in self.colors_dict.items()
+        }
+        out = {
+            "palette": p_dict,
+            "bg": self.vs.bg_hex,
+        }
+        return out
+
     @property
     def is_dark(self) -> bool:
-        return sum(to_rgb(self.bg_hex)) <= 1.5
+        return sum(to_rgb(self.vs.bg_hex)) <= 1.5
 
 
-if __name__ == "__main__":
+def gen_palette_cmd(args: Namespace) -> None:
+    """
+    Entrypoint into the palette generator.
+
+    Arguments defined in main.py
+    """
 
     np.set_printoptions(precision=2, suppress=True)
-    bg_hex = "#E8E8E8"
 
-    do_fit: bool = True
+    with open(args.spec, "r") as f:
+        full_spec = yaml.full_load(f)
 
-    if do_fit:
-        specs = [
-            light_bgs := PaletteSpec(
-                name="BGL",
-                n_colors=(nc := 6),
-                m_hinge=HingeSpec(1, 4, 1.0),
-                j_hinge=HingeSpec(0.90, 0.95, 30.0),
-                de_hinge=HingeSpec(0.05, 0.15, 10.0),
-                hue_gap_hinge=HingeSpec(0.0, 0.1 + 2 / nc, 1.0),
-            ),
-            primaries := PaletteSpec(
-                name="PRI",
-                n_colors=(nc := 10),
-                m_hinge=HingeSpec(17.5, 25.0, 1.0),
-                j_hinge=HingeSpec(0.30, 0.50, 10.0),
-                de_hinge=HingeSpec(0.40, 0.90, 10.0),
-                hue_gap_hinge=HingeSpec(0.0, 1.5 / nc, 5.0),
-            ),
-            secondaries := PaletteSpec(
-                name="SND",
-                n_colors=(nc := 6),
-                m_hinge=HingeSpec(0, 6, 1.0),
-                j_hinge=HingeSpec(0.60, 0.75, 15.0),
-                de_hinge=HingeSpec(0.35, 0.55, 10.0),
-                hue_gap_hinge=HingeSpec(0.0, 3 / nc, 1.0),
-            ),
-            highlights := PaletteSpec(
-                name="HL",
-                n_colors=(nc := 6),
-                m_hinge=HingeSpec(10.0, 12.5, 1.0),
-                j_hinge=HingeSpec(0.825, 0.875, 20.0),
-                de_hinge=HingeSpec(0.20, 0.20, 10.0),
-                hue_gap_hinge=HingeSpec(0.0, 2 / nc, 0.5),
-            ),
-        ]
+    views = {
+        name: ViewingSpec(name=name, **view_args)
+        for name, view_args in full_spec["views"].items()
+    }
 
-        spec_dict = {ps.name: ps for ps in specs}
-        # spec_dict = {'test': primaries}
+    constructors = {"jab_ring": JabRingSpec, "fixed": FixedSolver}
 
-        scheme = ColorScheme(
-            "Restraint",
-            bg_hex,
-            vs=NIGHT_VIEW_LIGHT,
-            palettes=spec_dict,
+    palette_spec: dict[str, ColorSolver] = {
+        name: constructors[d.pop("type")].construct_from_config(  # type: ignore
+            d["args"] | {"name": name}
         )
+        for name, d in full_spec["palette"].items()
+    }
 
-        with open("scheme.p", "wb") as f:
-            pickle.dump(scheme, f)
+    if (out_fn := getattr(args, "out", None)) is None:
+        base, ext = splitext(args.spec)
+        out_fn = base + ".palette" + ext
 
-    else:
-        with open("scheme.p", "rb") as f:
-            scheme = pickle.load(f)
-    scheme.draw_cone()
-    # scheme.draw_colors()
-    out = scheme.format_colors()
-    # print(out, file=open("../examples/example_scheme.html", "w"))
-    print(out, file=open("test.html", "w"))
+    out = {
+        "name": full_spec["name"],
+        "views": {},
+    }
+    for view_name, view in views.items():
+        print(f"Solving palette {view_name}...")
+        palette = PaletteSolver(
+            view_name + "_palette", vs=view, palette_spec=palette_spec
+        )
+        out["views"][view_name] = palette.serialize()
+
+        if not args.html:
+            continue
+
+        html_fn = splitext(out_fn)[0] + f".{view_name}.html"
+        with open(html_fn, "w") as f:
+            print(f"Saving html to {html_fn}")
+            f.write(palette.dump_html())
+
+    print(f"Saving palettes to {out_fn}.")
+    with open(out_fn, "w") as f:
+        yaml.dump(out, f)

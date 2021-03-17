@@ -7,7 +7,7 @@ repos:
           - --remove-unused-variables
           - --remove-all-unused-imports
     repo: https://github.com/myint/autoflake
-    rev: ''
+    rev: 'v1.4'
   # BLACK-   id: autoflake
   - hooks:
       - id: black
@@ -25,7 +25,7 @@ repos:
           - --pre-summary-newline
           - --make-summary-multi-line
     repo: https://github.com/myint/docformatter
-    rev: ''
+    rev: 'v1.4'
   # ISORT
   - hooks:
       - id: isort
@@ -33,20 +33,20 @@ repos:
           - --profile=black
           - --line-length=80
     repo: https://github.com/pycqa/isort
-    rev: ''
+    rev: '5.7.0'
   # LOCAL HOOKS
   - repo: local
     hooks:
-      - id: mypy
-        name: mypy
-        language: system
-        entry: mypy
-        args:
-          - --config-file=mypy.ini
-        exclude: tests
-        types:
-          - python
-            # files: palette_gen
+      # njit is making this very hard to satisfy properly, need to isolate
+      # - id: mypy
+      #   name: mypy
+      #   language: system
+      #   entry: .venv/bin/mypy
+      #   args:
+      #     - --config-file=mypy.ini
+      #   exclude: tests
+      #   types:
+      #     - python
       # pytest
       - id: pytest
         name: pytest

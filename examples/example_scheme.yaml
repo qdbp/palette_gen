@@ -1,0 +1,266 @@
+meta:
+    parent_scheme: Default
+    name: RestraintAuto
+colors:
+    caret_row_color: white
+    added_lines_color: "#60b998"
+    console_background_key: salmon
+    deleted_lines_color: snd003
+    diff_separators_background: "#949a9f"
+    documentation_color: bg002
+    gutter_background: bg_grey_dark
+    ignored_added_lines_border_color: "#60b998"
+    ignored_deleted_lines_border_color: "#cc8a8a"
+    ignored_modified_lines_border_color: "#69a3c6"
+    indent_guide: snd002
+    information_hint: "#d9d9d9"
+    line_numbers_color: snd002
+    tearline_color: snd002
+    modified_lines_color: "#69a3c6"
+    notification_background: "#2b2710"
+    right_margin_color: "#998f86"
+    selected_indent_guide: "#778275"
+    visual_indent_guide: fg_grey
+attributes:
+    text: &text
+        fg: fg_grey
+        bg: bg_grey
+    default_block_comment: &comment
+        fg: "#898472"
+    default_class_name: &class
+        fg: tone005
+        ft: 1
+    default_interface_name: &interface
+        fg: tone001
+        ft: 1
+    default_comma: &punctuation
+        fg: black
+    default_operation_sign: *punctuation
+    default_parenths: *punctuation
+    default_semicolon: *punctuation
+    default_dot: *punctuation
+    default_braces: *punctuation
+    default_brackets: *punctuation
+    default_number: &number
+        fg: pri000
+    default_constant: &constant
+        fg: pri006
+        ft: 1
+    default_doc_comment: &docstr
+        fg: snd001
+        ft: 1
+    default_doc_comment_tag:
+        fg: snd000
+        effect: 1
+    default_doc_comment_tag_value:
+        fg: snd000
+    default_doc_markup:
+        fg: "#a58b90"
+    default_function_call:
+        fg: black
+        effect: 1
+    default_function_declaration: &func
+        fg: pri004
+        ft: 1
+    default_static_method: *func
+    default_global_variable: &global_var
+        fg: ult004
+    default_identifier: *text
+    default_instance_field: &field
+        fg: pri005
+    default_static_field: &static_field
+        <<: *field
+        ft: 1
+    default_string: &string
+        fg: pri002
+    default_invalid_string_escape:
+        <<: *string
+        bg: hl004
+        ft: 1
+    default_valid_string_escape:
+        <<: *string
+        ft: 1
+    default_keyword:
+        fg: black
+        ft: 1
+        effect: 1
+    default_label: &label
+        fg: ult003
+        ft: 1
+    default_line_comment: *comment
+    default_metadata: &meta
+        fg: tone003
+    default_parameter: &parameter
+        fg: pri007
+    default_attribute:
+        <<: *parameter
+        ft: 1
+    default_predefined_symbol: &predefined
+        fg: pri006
+        ft: 1
+    default_reassigned_local_variable:
+        base: default_local_variable
+    default_reassigned_parameter:
+        base: default_parameter
+    default_tag:
+        base: text
+    deleted_text_attributes:
+        fg: fg_light
+        effect: 1
+    diff_conflict:
+        bg: hl004
+        stripe: hl004
+    diff_deleted:
+        bg: hl005
+        stripe: hl005
+    diff_inserted:
+        bg: hl002
+        stripe: hl002
+    diff_modified:
+        bg: hl000
+        stripe: hl000
+    errors_attributes: &error
+        bg: hl004
+        stripe: hl004
+    executionpoint_attributes:
+        bg: "#baccdc"
+        effect_color: 0
+        stripe: "#baccdc"
+        effect: 1
+    folded_text_attributes:
+        bg: snd003
+        effect: 1
+    identifier_under_caret_attributes:
+        bg: "#b9c4e0"
+        stripe: "#b9c4e0"
+    implicit_anonymous_class_parameter_attributes:
+        base: class_name_attributes
+    info_attributes:
+        effect_color: "#808e91"
+        stripe: "#808e91"
+        effect: 2
+    injected_language_fragment:
+        bg: "#d3dabf"
+    inline_parameter_hint_current:
+        fg: "#3e834f"
+        bg: "#bcdaf7"
+    matched_brace_attributes:
+        bg: hl001
+        ft: 1
+    not_used_element_attributes:
+        fg: fg_light
+        effect_color: fg_light
+        effect: 2
+    # java
+    annotation_name_attributes:
+        base: default_metadata
+    annotation_attribute_name_attributes:
+        base: default_metadata
+    static_field_attributes: *static_field
+    instance_field_attributes: *field
+    instance_final_field_attributes:
+        <<: *constant
+        ft: 0
+    static_final_field_attributes: *constant
+    constructor_call_attributes: &constructor_call
+        <<: *class
+        ft: 0
+    # KOTLIN
+    kotlin_closure_default_parameter:
+        base: kotlin_parameter
+    kotlin_constructor: *constructor_call
+    kotlin_dynamic_function_call:
+        fg: black
+        ft: 2
+    kotlin_dynamic_property_call:
+        fg: "#006465"
+        ft: 2
+    kotlin_enum_entry: &enum
+        fg: tone003
+        ft: 1
+    kotlin_extension_property: &kext
+        <<: *predefined
+        ft: 1
+    kotlin_function_literal_braces_and_arrow: *func
+    kotlin_instance_property_custom_property_declaration: &property
+        fg: pri001
+    kotlin_label:
+        base: default_label
+    kotlin_mutable_variable:
+        ft: 2
+    kotlin_named_argument:
+        <<: *parameter
+        ft: 2
+    kotlin_object:
+        fg: pri003
+        ft: 1
+    kotlin_package_property:
+        <<: *property
+        ft: 1
+    kotlin_wrapped_into_ref:
+        fg: "#744a58"
+    kotlin_smart_cast_receiver: {}
+    kotlin_smart_cast_value: {}
+    kotlin_smart_cast_constant: {}
+    # python
+    py.annotation:
+        fg: snd000
+    py.decorator: *meta
+    py.predefined_usage:
+        <<: *predefined
+        ft: 0
+    py.self_parameter: *field
+    search_result_attributes:
+        effect_color: "#9b92a0"
+        stripe: "#9b92a0"
+    text_search_result_attributes:
+        bg: "#dec49b"
+        stripe: "#dec49b"
+    todo_default_attributes:
+        fg: 567b
+        ft: 2
+        stripe: "#3d576b"
+    type_parameter_name_attributes:
+        <<: *parameter
+        ft: 1
+    typo:
+        effect_color: "#7e9000"
+        stripe: "#7e9000"
+    unknown_symbol:
+        fg: "#ff0000"
+    unmatched_brace_attributes:
+        bg: "#e5c0cb"
+        ft: 1
+    warning_attributes:
+        bg: "#e6cab1"
+        stripe: "#e6cab1"
+    write_identifier_under_caret_attributes:
+        bg: "#a5cfc9"
+        stripe: "#a5cfc9"
+    write_search_result_attributes:
+        bg: "#cbb5d6"
+        stripe: "#cbb5d6"
+    wrong_references_attributes:
+        fg: "#89393f"
+        bg: "#e5c0cb"
+    xml_tag_data:
+        fg: fg_grey
+        bg: bg_grey
+    yaml_anchor: *label
+    yaml_scalar_key:
+        fg: black
+    default_template_language_color:
+        base: text
+    default_entity:
+        fg: pri007
+        ft: 1
+font:
+    font_scale: 1.0
+    line_spacing: 0.9
+    editor_font_size: 14
+    editor_font_name: JetBrains Mono
+    editor_ligatures: true
+    console_font_name: JetBrains Mono
+    console_font_size: 12
+    console_ligatures: true
+    console_line_spacing: 0.8

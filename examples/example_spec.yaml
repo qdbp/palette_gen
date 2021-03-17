@@ -1,0 +1,76 @@
+name: RestraintAuto
+views:
+    Night:
+        T: 6500
+        Lsw: 2
+        Lmax: 10
+        Lb: 6
+        bg_hex: "#e8e8e8"
+    Day:
+        T: 6500
+        Lsw: 100
+        Lmax: 60
+        Lb: 40
+        bg_hex: "#e8e8e8"
+palette:
+    greys:
+        type: fixed
+        args:
+            black: "#000000"
+            white: "#ffffff"
+            fg_grey: "#3f3f3f"
+            fg_light: "#808080"
+            bg_grey: "#e8e8e8"
+            bg_grey_dark: "#d9d9d9"
+            salmon_dark: "#CCBCAD"
+            salmon: "#F2DFCE"
+            salmon_light: "#FFF1E4"
+    ult:
+        type: jab_ring
+        args:
+            n_colors: 6
+            m_lb: 27.0
+            m_ub: 27.0
+            j_lb: 0.54
+            j_ub: 0.54
+    pri:
+        type: jab_ring
+        args:
+            n_colors: 8
+            m_lb: 19.0
+            m_ub: 19.0
+            j_lb: 0.445
+            j_ub: 0.445
+    tone:
+        type: jab_ring
+        args:
+            n_colors: 6
+            j_lb: 0.305
+            j_ub: 0.305
+            m_lb: 13.0
+            m_ub: 13.0
+            hue_offset: 0.5
+    snd:
+        type: jab_ring
+        args:
+            n_colors: 4
+            j_lb: 0.45
+            j_ub: 0.45
+            m_lb: 4.0
+            m_ub: 4.0
+    hl:
+        type: jab_ring
+        args:
+            n_colors: 6
+            j_lb: 0.83
+            j_ub: 0.83
+            m_lb: 12.0
+            m_ub: 12.0
+    bg:
+        type: jab_ring
+        args:
+            n_colors: 6
+            j_lb: 0.89
+            j_ub: 0.89
+            m_lb: 5.0
+            m_ub: 5.0

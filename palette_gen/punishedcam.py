@@ -1,3 +1,4 @@
+# type: ignore
 """
 Specialized color appearance model for monitor color scheme design.
 
@@ -43,7 +44,7 @@ CIECAM02_Hs = np.array([0.0, 100.0, 200.0, 300.0, 400.0])
 CIECAM02_arange = np.array([*range(len(CIECAM02_hs))])
 
 
-@njit  # type: ignore
+@njit
 def matmul_last_axis(mat: np.ndarray, vecs: np.ndarray) -> np.ndarray:
     """
     Applies
@@ -67,7 +68,7 @@ def matmul_last_axis(mat: np.ndarray, vecs: np.ndarray) -> np.ndarray:
 
 
 # noinspection PyPep8Naming
-@njit  # type: ignore
+@njit
 def XYZ_to_PUNISHEDCAM_JabQMsh_jit(
     # no defaults -- perfection of bust!
     XYZ: np.ndarray,
@@ -309,7 +310,7 @@ def XYZ_to_PUNISHEDCAM_JabQMsh_jit(
 
 
 # noinspection PyPep8Naming
-@njit  # type: ignore
+@njit
 def de_punished_jab(jab1: np.ndarray, jab2: np.ndarray) -> np.ndarray:
     return np.sqrt(((jab1[..., :3] - jab2[..., :3]) ** 2).sum(axis=-1))
 

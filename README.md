@@ -9,7 +9,73 @@ the [HK effect](https://en.wikipedia.org/wiki/Helmholtz%E2%80%93Kohlrausch_effec
 This includes an original, advanced color model and enough low-level user
 controls to give UX professionals irreparable brain damage.
 
-## Description
+## Intellij Color Scheme Generation (Cool Shit)
+
+When installed with `pip`, this repo provides a script, `palette-gen` that is
+able to:
+
+1. Go from declarative specifications of abstract palettes to concrete palettes
+2. Go from a declarative yaml specification of a Jetbrains color scheme and a
+   palette produces as above to a full .xml scheme usable by IDEA
+   
+### Palette Generation
+The input file looks something like this:
+```yaml
+name: SchemeName
+views:
+    Day:
+        T: 6500
+        Lsw: 100
+        Lmax: 60
+        Lb: 40
+        bg_hex: "#e8e8e8"
+palette:
+    ult:
+        type: jab_ring
+        args:
+            n_colors: 6
+            m_lb: 27.0
+            m_ub: 27.0
+            j_lb: 0.54
+            j_ub: 0.54
+```
+
+A more complete file is given in the examples folder. These parameters map
+closely to the internal details of the PUNISHEDCAM colorspace and color solvers
+as defined in the Internals section, which you should feel free to read if you're
+some sort of freak who likes reading. If you're normal, just, like, mess around
+with the numbers and the sections until something looks good.
+
+The way to generate an actual palette is:
+
+`palette-gen palette <that file>`
+
+You may pass an `--html` flag to also produce a modern, responsive webpage
+showcasing the colors you have just produced for rapid iteration.
+
+### IDEA Scheme Generation
+
+This is done as follows:
+
+`palette-gen scheme <scheme yaml> <generated palette yaml>`
+
+The generated palette yaml is, as the astute reader might guess, the file
+produced by `palette-gen palette`. The scheme file hews quite closely to the
+`.icls/.xml` Jetbrains color scheme files, except that automatic generation
+makes it roughly 100 times faster to work with.
+
+Any string in a color-typed key in the scheme file will be looked up among
+the colors defined by the palette and replaced with its value. When customizing
+the scheme, use YAML anchors like your life depends on it, or it will become
+unmanageable. There is also no good way to enumerate all possible keys you
+might want to customize, so it's good to update the scheme from time to time
+with manual changes and additions you make from the IDEA GUI.
+
+If you're installing the file directly and not through a theme, rename it
+to end in `.icls` because IDEA is too stupid to let you import `.xml` schemes
+directly.
+
+## Internals (Nerd Shit)
 
 ### Color Model
 
@@ -60,6 +126,10 @@ provides that variety, exuberance and joie-de-vivre to the output.
 
 ### Worked Example
 
+This sections walks through the internals of computing a full palette.
+
+#### Viewing Conditions
+
 I "work" at night in a dim room and think dark themes are way too mainstream, so
 I want a dim-light friendly light color scheme.
 
@@ -79,11 +149,13 @@ on what is actually on your screen in a complicated way. The proper way to
 support redshift is at the RGB-XYZ matrix level, which is currently not
 implemented. soz.
 
+#### Palette Spec
+
 With that out of the way, let's define some palettes. Here's just the one for
 what I call primary colors, shadowing the more common usage.
 
-```
-primaries := PaletteSpec(
+```python
+primaries := HingeMinDistSolver(
     name="PRI",
     n_colors=(nc := 10),
     m_hinge=HingeSpec(17.5, 25.0, 1.0),
@@ -94,6 +166,14 @@ primaries := PaletteSpec(
 
 ```
 
+This call instantiates a solver object with a collection of parameters which
+define how we wish to find colors, how many we wish to find, etc.
+
+#### Hinge loss
+
+The class above tries to maximize the minimum pairwise distance between colors in
+Jab'p space while respecting certain bounds with a hinge loss.
+
 The hinge loss returns 0 if the parameter in question is between the first two
 arguments; or, if not, the third argument times the distance from the zero-loss
 zone. For example, here the hue gap loss kicks in if the largest hue gap between
@@ -103,11 +183,34 @@ internally, hue ranges between 0 and 1).
 I leave it to the reader to figure out the details of the other hinges -- the
 relevant implementation is in `palette_loss` in `palette_solver.py`
 
-I add some more palettes to the spec and define a background color. Then, all
-that's left is to fire up the optimizer:
+
+#### Jab Ring and other Solvers
+
+The `HingeSpec` actually implements the following interface:
+
+```python
+class ColorSolver:
+  def solve_for_context(self, bg_hex: str, vs: ViewingSpec) -> Iterable[Color]:
+  def construct_from_config(cls: Type[T], conf: dict[str, Any]) -> T:
+```
+
+Any class that implements the first method will be usable by the `PaletteSolver`
+described below to be combined with other `ColorSolver` specification into
+a single output.
+
+If the class also implements the `construct_from_config` method, it will be
+usable in the declarative batch-processing infrastructure described in
+the previous section, as long as it is faithfully constructible from the
+defined configuration sections.
+
+#### Output
+
+Enough with boring-ass implementation details. How do we get the colors? As
+below: I add some more palettes to the spec and define a background color.
+Then, all that's left is to fire up the optimizer.
 
 ```
-scheme = ColorScheme(
+scheme = PaletteSolver(
     "Restraint",
     bg_hex,
     vs=NIGHT_VIEW_LIGHT,
@@ -115,7 +218,8 @@ scheme = ColorScheme(
 )
 ```
 
-#### Output
+This class accepts a map of names to `ColorSolver` objects, and creates
+a dictionary of lists of solved colors on construction. Easy, breezy, colourful!
 
 To debug our work, the `ColorScheme` class defines a `draw_cone` method, which
 plots our palettes within the bounds of the Jab'p gamut defined by our RGB gamut
@@ -125,12 +229,30 @@ and view conditions:
 
 This is an interactive plot that is useful for debugging hinge bounds for your
 palettes and seeing their interplay. When you are happy with this, you may use
-the `format_colors()`
-to generate a modern, responsive HTML output:
+the `dump_html()` method to generate a modern, responsive HTML output:
 
 ![](examples/output.png)
 
 And you are done!
+
+#### Machine-readable colors
+
+The `ColorScheme` class also provides a `serialize()` method that reduces
+the solved colors to a JSON-friendly dictionary of primitives as seen below (in
+YAML format):
+```yaml
+view_name:
+    palette_spec_name:
+        - name: color_name
+          hex: '#dead00'
+```
+
+A complete output can be seein in `examples/example_output.palette.yaml`
+
+This is intended to be used with the declarative palette generation functionality
+of the installed `palette-gen` script. Example palette and spec inputs are also
+provided. Independent code exploration is ~~encouraged~~ mandated by my
+disinclination to write more documentaiton at this point in time.
 
 ## Future Work
 

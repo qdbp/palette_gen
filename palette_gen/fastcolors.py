@@ -1,16 +1,15 @@
+# type: ignore
 """
 Fast jit-compiled versions of common color conversion functions suitable for
 use in optimization routines.
 """
+
 from collections import Mapping
 from timeit import Timer
 from typing import Any
 
 import numpy as np
-from colour import (
-    RGB_COLOURSPACES,
-    xyY_to_XYZ,
-)
+from colour import RGB_COLOURSPACES, xyY_to_XYZ
 from colour.models import RGB_COLOURSPACE_sRGB
 from numba import njit
 
@@ -33,7 +32,7 @@ _LUV_49_VEC: np.ndarray = np.asarray([4.0, 9.0])
 
 
 # noinspection PyPep8Naming
-@njit  # type: ignore
+@njit
 def cct_to_D_xyY_jit(T: float) -> np.ndarray:
     """
     Finds CIE D-series illuminant xyY coordinates from temperature.
@@ -72,15 +71,15 @@ def cct_to_D_xyY_jit(T: float) -> np.ndarray:
     return out
 
 
-@njit  # type: ignore
+@njit
 def hk_f_kaiser(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     # noinspection SpellCheckingInspection
     """
     Calculates the "F" factor by Kaiser from xyY (x, y) coordinates.
 
-    Donofrio, R. L. (2011). Review Paper: The Helmholtz-Kohlrausch effect.
-    Journal of the Society for Information Display,
-    19(10), 658. doi:10.1889/jsid19.10.658
+    Donofrio, R. L. (2011). Review Paper: The Helmholtz-Kohlrausch
+    effect. Journal of the Society for Information Display, 19(10), 658.
+    doi:10.1889/jsid19.10.658
     """
     return (
         0.256
@@ -91,14 +90,14 @@ def hk_f_kaiser(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     )
 
 
-@njit  # type: ignore
+@njit
 def hk_correct_lchab_inplace(lchab: np.ndarray) -> None:
     """
     Corrects L* of a L*a*b* array in-place using the Fairchild (1991) formula.
 
-    Fairchild, M. D., & Pirrotta, E. (1991).
-    Predicting the lightness of chromatic object colors using CIELAB.
-    Color Research & Application, 16(6), 385–393. doi:10.1002/col.5080160608
+    Fairchild, M. D., & Pirrotta, E. (1991). Predicting the lightness of
+    chromatic object colors using CIELAB. Color Research & Application,
+    16(6), 385–393. doi:10.1002/col.5080160608
     """
     f2 = 2.5 - 0.025 * lchab[..., 0]
     f1 = 0.116 * np.abs(sin_deg(lchab[..., 2] / 2 - 45)) + 0.085
@@ -106,7 +105,7 @@ def hk_correct_lchab_inplace(lchab: np.ndarray) -> None:
 
 
 # noinspection PyPep8Naming
-@njit  # type: ignore
+@njit
 def xyY_to_XYZ_jit(xyY: np.ndarray) -> np.ndarray:
     out: np.ndarray = np.zeros_like(xyY)
     x = xyY[..., 0]
@@ -120,7 +119,7 @@ def xyY_to_XYZ_jit(xyY: np.ndarray) -> np.ndarray:
 
 
 # noinspection PyPep8Naming
-@njit  # type: ignore
+@njit
 def XYZ_to_xyY_jit(
     XYZ: np.ndarray, black_xy: np.ndarray = xyY_D65
 ) -> np.ndarray:
@@ -137,7 +136,7 @@ def XYZ_to_xyY_jit(
 
 
 # noinspection PyPep8Naming
-@njit  # type: ignore
+@njit
 def XYZ_to_Luv_D65_jit(
     XYZ: np.ndarray, XYZr: np.ndarray = XYZ_D65
 ) -> np.ndarray:
@@ -159,7 +158,7 @@ def XYZ_to_Luv_D65_jit(
 
 
 # noinspection PyPep8Naming
-@njit  # type: ignore
+@njit
 def Luv_to_LCHuv_jit(Luv: np.ndarray) -> np.ndarray:
     out: np.ndarray = np.zeros_like(Luv)
     out[..., 0] = Luv[..., 0]
@@ -168,7 +167,7 @@ def Luv_to_LCHuv_jit(Luv: np.ndarray) -> np.ndarray:
     return out
 
 
-@njit  # type: ignore
+@njit
 def atan2_360(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     out = np.arctan2(x, y)
     out *= 180 / np.pi
@@ -176,18 +175,18 @@ def atan2_360(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     return out
 
 
-@njit  # type: ignore
+@njit
 def cos_deg(arr: np.ndarray) -> np.ndarray:
     return np.cos(np.deg2rad(arr))
 
 
-@njit  # type: ignore
+@njit
 def sin_deg(arr: np.ndarray) -> np.ndarray:
     return np.sin(np.deg2rad(arr))
 
 
 # noinspection PyPep8Naming
-@njit  # type: ignore
+@njit
 def XYZ_to_Lab_D65_jit(
     XYZ: np.ndarray, XYZr: np.ndarray = XYZ_D65
 ) -> np.ndarray:
@@ -209,7 +208,7 @@ Lab_to_LCHab_jit = Luv_to_LCHuv_jit
 
 
 # noinspection PyPep8Naming
-@njit  # type: ignore
+@njit
 def sRGB_to_XYZ_jit(sRGB: np.ndarray) -> np.ndarray:
     srgb = np.where(
         sRGB < 0.04045, sRGB / 12.92, ((sRGB + 0.055) / 1.055) ** 2.4
@@ -222,7 +221,7 @@ def sRGB_to_XYZ_jit(sRGB: np.ndarray) -> np.ndarray:
 
 
 # noinspection PyPep8Naming
-@njit  # type: ignore
+@njit
 def HSV_to_RGB_jit(HSV: np.ndarray) -> np.ndarray:
     hp: np.ndarray = HSV[..., 0:1] * 6
     ch: np.ndarray = HSV[..., 1:2] * HSV[..., 2:]
@@ -258,7 +257,7 @@ def HSV_to_RGB_jit(HSV: np.ndarray) -> np.ndarray:
 
 
 # noinspection PyPep8Naming
-@njit  # type: ignore
+@njit
 def dE_2000_jit(Lab1: np.ndarray, Lab2: np.ndarray) -> np.ndarray:
     L1, a1, b1 = Lab1[..., 0], Lab1[..., 1], Lab1[..., 2]
     L2, a2, b2 = Lab2[..., 0], Lab2[..., 1], Lab2[..., 2]
@@ -323,7 +322,7 @@ def dE_2000_jit(Lab1: np.ndarray, Lab2: np.ndarray) -> np.ndarray:
 
 
 # noinspection PyPep8Naming
-@njit  # type: ignore
+@njit
 def dE_2000_sRGB_D65_jit(rgb1: np.ndarray, rgb2: np.ndarray) -> np.ndarray:
     return dE_2000_jit(
         XYZ_to_Lab_D65_jit(sRGB_to_XYZ_jit(rgb1)),

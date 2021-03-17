@@ -8,7 +8,6 @@ from argparse import Namespace
 from dataclasses import dataclass, field, fields
 from datetime import datetime
 from functools import partial
-from os.path import splitext
 from typing import Any, Callable, Iterable
 from typing import Optional as Opt
 from typing import Type, Union
@@ -19,7 +18,7 @@ from xml.etree.ElementTree import Element, SubElement, tostring
 
 import yaml
 
-from palette_gen.processors import ConcretePaletteViewSet
+from palette_gen.processors import ConcretePalette
 
 
 def strip_hex(s: str) -> str:
@@ -278,46 +277,39 @@ class JBScheme(XMLSerializable):
         font = JBFontSpec(**scheme["font"])
 
         with open(args.palette, "r") as f:
-            view_set = ConcretePaletteViewSet.from_config(yaml.full_load(f))
+            palette = ConcretePalette.from_config(yaml.full_load(f))
 
-        print(f"Generating schemes for {view_set.name}")
+        print(f"Generating scheme for {palette.name}, view {palette.view}")
 
-        for view_name, palette in view_set.view_map.items():
-
-            color_spec = JBColorSpec(
-                JBAtomicOption(key, palette.subs(val))
-                for key, val in scheme["colors"].items()
+        color_spec = JBColorSpec(
+            JBAtomicOption(key, palette.subs(val))
+            for key, val in scheme["colors"].items()
+        )
+        attrs = [
+            JBAttrSpec(
+                name=key,
+                **{
+                    k: palette.subs(v) if k in COLOR_KEYS else str(v)
+                    for k, v in val.items()
+                },
             )
-            attrs = [
-                JBAttrSpec(
-                    name=key,
-                    **{
-                        k: palette.subs(v) if v in COLOR_KEYS else str(v)
-                        for k, v in val.items()
-                    },
-                )
-                for key, val in scheme["attributes"].items()
-            ]
+            for key, val in scheme["attributes"].items()
+        ]
 
-            jb_scheme = JBScheme(
-                color_spec=color_spec,
-                attrs=attrs,
-                font_spec=font,
-                **scheme["meta"],
-            )
+        jb_scheme = JBScheme(
+            color_spec=color_spec,
+            attrs=attrs,
+            font_spec=font,
+            **scheme["meta"],
+        )
 
-            root = jb_scheme.to_xml()
-            dom: str = minidom.parseString(tostring(root)).toprettyxml(
-                indent="  "
-            )
-            dom = dom[dom.index("\n") + 1 :]
+        root = jb_scheme.to_xml()
+        dom: str = minidom.parseString(tostring(root)).toprettyxml(indent="  ")
+        dom = dom[dom.index("\n") + 1 :]
 
-            if (out_fn := getattr(args, "out")) is None:
-                out_fn = jb_scheme.name + f".xml"
+        if (out_fn := getattr(args, "out")) is None:
+            out_fn = jb_scheme.name + f"{palette.view}.xml"
 
-            base, ext = splitext(out_fn)
-            out_fn = base + f".{view_name}" + ext
-
-            print(f"Writing generated scheme {out_fn}")
-            with open(out_fn, "w") as f:
-                f.write(dom)
+        print(f"Writing generated scheme {out_fn}")
+        with open(out_fn, "w") as f:
+            f.write(dom)

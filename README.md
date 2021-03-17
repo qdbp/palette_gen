@@ -26,9 +26,11 @@ make example
 ```
 
 The above will produce output files to `out/` in the current directory.
-   
+
 ### Palette Generation
+
 The input file looks something like this:
+
 ```yaml
 name: SchemeName
 views:
@@ -51,9 +53,9 @@ palette:
 
 A more complete file is given in the examples folder. These parameters map
 closely to the internal details of the PUNISHEDCAM colorspace and color solvers
-as defined in the Internals section, which you should feel free to read if you're
-some sort of freak who likes reading. If you're normal, just, like, mess around
-with the numbers and the sections until something looks good.
+as defined in the Internals section, which you should feel free to read if
+you're some sort of freak who likes reading. If you're normal, just, like, mess
+around with the numbers and the sections until something looks good.
 
 The way to generate an actual palette is:
 
@@ -62,46 +64,46 @@ The way to generate an actual palette is:
 You may pass an `--html` flag to also produce a modern, responsive webpage
 showcasing the colors you have just produced for rapid iteration.
 
+This generates one output file per view, each containing a single concrete
+realization of a palette.
+
 ### IDEA Scheme Generation
 
 This is done as follows:
 
-`palette-gen scheme <scheme yaml> <generated palette yaml>`
+`palette-gen scheme <scheme yaml> <generated palette yaml> ...`
+
+This takes a scheme spec and a generated palette, producing a concrete `.xml`
+scheme.
 
 The generated palette yaml is, as the astute reader might guess, the file
-produced by `palette-gen palette`. The scheme file hews quite closely to the
+produced by `palette-gen palette`. When building the theme, any string in a
+color-typed key in the scheme file will be looked up among the colors defined by
+the palette, and replaced with its value.
+
+The scheme file hews quite closely to the
 `.icls/.xml` Jetbrains color scheme files, except that automatic generation
-makes it roughly 100 times faster to work with.
+makes it roughly 100 times faster to work with. When customizing the scheme, use
+YAML anchors like your life depends on it, or it will become unmanageable. There
+is also no good way to enumerate all possible keys you might want to customize,
+so it's good to update the scheme from time to time with manual changes and
+additions you make from the IDEA GUI.
 
-Any string in a color-typed key in the scheme file will be looked up among
-the colors defined by the palette and replaced with its value. When customizing
-the scheme, use YAML anchors like your life depends on it, or it will become
-unmanageable. There is also no good way to enumerate all possible keys you
-might want to customize, so it's good to update the scheme from time to time
-with manual changes and additions you make from the IDEA GUI.
-
-If you're installing the file directly and not through a theme, rename it
-to end in `.icls` because IDEA is too stupid to let you import `.xml` schemes
-directly.
+If you're installing the file directly and not through a theme, rename it to end
+in `.icls` because IDEA is too stupid to let you import `.xml` schemes directly.
 
 ### IDEA Theme Generation
 
-`palette-gen theme <theme spec> <generated palette> <view name> ...`
+`palette-gen theme <theme spec> <generated palette> ...`
 
 Theme generation is conceptually similar to scheme generation, with the obvious
 difference being that the specification file takes theme directives. The
-`"colors"` dict is omitted from the spec. Also, theme generation works one view at a time, so a concrete view for which
-to generate the theme needs to be given.
+`"colors"` dict is omitted from the spec.
 
-The `"colors"` dict is no specified in the spec, and is normally generated
-from the palette. However, if `--inline-colors` is passed, all palette
-colors will be inlined and there will be no `"colors"` section in the produced
+The `"colors"` dict is no specified in the spec, and is normally generated from
+the palette. However, if `--inline-colors` is passed, all palette colors will be
+inlined and there will be no `"colors"` section in the produced
 `.theme.json`.
-
-
-### IDEA Theme generation
-
-
 
 ## Internals (Nerd Shit)
 
@@ -199,8 +201,8 @@ define how we wish to find colors, how many we wish to find, etc.
 
 #### Hinge loss
 
-The class above tries to maximize the minimum pairwise distance between colors in
-Jab'p space while respecting certain bounds with a hinge loss.
+The class above tries to maximize the minimum pairwise distance between colors
+in Jab'p space while respecting certain bounds with a hinge loss.
 
 The hinge loss returns 0 if the parameter in question is between the first two
 arguments; or, if not, the third argument times the distance from the zero-loss
@@ -211,31 +213,32 @@ internally, hue ranges between 0 and 1).
 I leave it to the reader to figure out the details of the other hinges -- the
 relevant implementation is in `palette_loss` in `palette_solver.py`
 
-
 #### Jab Ring and other Solvers
 
 The `HingeSpec` actually implements the following interface:
 
 ```python
 class ColorSolver:
-  def solve_for_context(self, bg_hex: str, vs: ViewingSpec) -> Iterable[Color]:
-  def construct_from_config(cls: Type[T], conf: dict[str, Any]) -> T:
+    def solve_for_context(self, bg_hex: str, vs: ViewingSpec) -> Iterable[
+        Color]:
+
+        def construct_from_config(cls: Type[T], conf: dict[str, Any]) -> T:
 ```
 
 Any class that implements the first method will be usable by the `PaletteSolver`
-described below to be combined with other `ColorSolver` specification into
-a single output.
+described below to be combined with other `ColorSolver` specification into a
+single output.
 
 If the class also implements the `construct_from_config` method, it will be
-usable in the declarative batch-processing infrastructure described in
-the previous section, as long as it is faithfully constructible from the
-defined configuration sections.
+usable in the declarative batch-processing infrastructure described in the
+previous section, as long as it is faithfully constructible from the defined
+configuration sections.
 
 #### Output
 
 Enough with boring-ass implementation details. How do we get the colors? As
-below: I add some more palettes to the spec and define a background color.
-Then, all that's left is to fire up the optimizer.
+below: I add some more palettes to the spec and define a background color. Then,
+all that's left is to fire up the optimizer.
 
 ```
 scheme = PaletteSolver(
@@ -246,8 +249,8 @@ scheme = PaletteSolver(
 )
 ```
 
-This class accepts a map of names to `ColorSolver` objects, and creates
-a dictionary of lists of solved colors on construction. Easy, breezy, colourful!
+This class accepts a map of names to `ColorSolver` objects, and creates a
+dictionary of lists of solved colors on construction. Easy, breezy, colourful!
 
 To debug our work, the `ColorScheme` class defines a `draw_cone` method, which
 plots our palettes within the bounds of the Jab'p gamut defined by our RGB gamut
@@ -265,22 +268,23 @@ And you are done!
 
 #### Machine-readable colors
 
-The `ColorScheme` class also provides a `serialize()` method that reduces
-the solved colors to a JSON-friendly dictionary of primitives as seen below (in
-YAML format):
+The `ColorScheme` class also provides a `serialize()` method that reduces the
+solved colors to a JSON-friendly dictionary of primitives as seen below (in YAML
+format):
+
 ```yaml
 view_name:
     palette_spec_name:
-        - name: color_name
-          hex: '#dead00'
+    -   name: color_name
+        hex: '#dead00'
 ```
 
 A complete output can be seein in `examples/example_output.palette.yaml`
 
-This is intended to be used with the declarative palette generation functionality
-of the installed `palette-gen` script. Example palette and spec inputs are also
-provided. Independent code exploration is ~~encouraged~~ mandated by my
-disinclination to write more documentaiton at this point in time.
+This is intended to be used with the declarative palette generation
+functionality of the installed `palette-gen` script. Example palette and spec
+inputs are also provided. Independent code exploration is ~~encouraged~~
+mandated by my disinclination to write more documentaiton at this point in time.
 
 ## Future Work
 

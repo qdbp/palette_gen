@@ -36,7 +36,7 @@ repos:
     rev: '5.7.0'
   # LOCAL HOOKS
   - repo: local
-    hooks:
+    hooks: []
       # njit is making this very hard to satisfy properly, need to isolate
       # - id: mypy
       #   name: mypy
@@ -48,12 +48,14 @@ repos:
       #   types:
       #     - python
       # pytest
-      - id: pytest
-        name: pytest
-        language: system
-        entry: /usr/bin/pytest
-        args:
-          - tests
-        pass_filenames: false
-        types:
-          - python
+      # slows us down for no reason now that we are done implementing
+      # the fastcolors functions
+      # - id: pytest
+      #   name: pytest
+      #   language: system
+      #   entry: /usr/bin/pytest
+      #   args:
+      #     - tests
+      #   pass_filenames: false
+      #   types:
+      #     - python

@@ -27,6 +27,12 @@ def main() -> None:
         help="generate an html file showing the colors",
         action="store_true",
     )
+    sub_palette.add_argument(
+        "views",
+        help="Views to generate palettes for. Will generate all if omitted.",
+        nargs="*",
+        type=str,
+    )
     sub_palette.set_defaults(cmd=gen_palette_cmd)
 
     # scheme generation
@@ -50,7 +56,6 @@ def main() -> None:
     sub_theme.add_argument(
         "palette", help="generated palette scheme file, yaml", type=str
     )
-    sub_theme.add_argument("view", help="view name to use", type=str)
     sub_theme.add_argument(
         "--inline-colors",
         help='inline all colors and omit the "colors" dict',

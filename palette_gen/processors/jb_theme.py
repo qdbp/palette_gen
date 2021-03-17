@@ -7,17 +7,16 @@ from typing import Any
 
 import yaml
 
-from palette_gen.processors import ConcretePaletteViewSet
+from palette_gen.processors import ConcretePalette
 from palette_gen.util import map_leaves
 
 
 def process_theme(args: Namespace) -> None:
 
     with open(args.palette, "r") as f:
-        view_set = ConcretePaletteViewSet.from_config(yaml.full_load(f))
+        palette = ConcretePalette.from_config(yaml.full_load(f))
 
-    print(f"Generating theme {view_set.name} for view {args.view}")
-    palette = view_set.view_map[args.view]
+    print(f"Generating theme {palette.name}, view {palette.view}")
 
     with open(args.spec, "r") as f:
         theme_config = yaml.full_load(f)
@@ -27,7 +26,7 @@ def process_theme(args: Namespace) -> None:
     author = meta["author"]
     # TODO should propagate these automatically
     dark = meta["dark"]
-    editor_scheme = meta["scheme"] + f".{args.view}.xml"
+    editor_scheme = meta["scheme"] + f".{palette.view}.xml"
 
     icon_section: dict[str, Any] = map_leaves(  # type: ignore
         lambda x: palette.subs(x), theme_config["icons"]  # type: ignore
@@ -42,15 +41,15 @@ def process_theme(args: Namespace) -> None:
         "name": name,
         "author": author,
         "dark": dark,
-        "editorScheme": editor_scheme,
+        "editorScheme": "/" + editor_scheme,
         **({"colors": palette.hex_map} if not args.inline_colors else {}),
         "ui": ui_dict,
         "icons": icon_section,
     }
 
     if (out_fn := args.out) is None:
-        out_fn = name + ".theme.json"
+        out_fn = name + f".{palette.view}.theme.json"
 
     print(f"Saving generated theme to {out_fn}")
     with open(out_fn, "w") as f:
-        json.dump(out, f)
+        json.dump(out, f, indent=2)

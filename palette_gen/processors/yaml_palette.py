@@ -41,25 +41,32 @@ def gen_palette_cmd(args: Namespace) -> None:
         base, ext = splitext(args.spec)
         out_fn = base + ".palette" + ext
 
-    out = {
-        "name": full_spec["name"],
-        "views": {},
-    }
-    for view_name, view in views.items():
-        print(f"Solving palette {view_name}...")
-        palette = PaletteSolver(
-            view_name + "_palette", vs=view, palette_spec=palette_spec
-        )
-        out["views"][view_name] = palette.serialize()
+    for view_name, vs in views.items():
 
-        if not args.html:
+        if args.views and view_name not in args.views:
             continue
 
-        html_fn = splitext(out_fn)[0] + f".{view_name}.html"
-        with open(html_fn, "w") as f:
-            print(f"Saving html to {html_fn}")
-            f.write(palette.dump_html())
+        out = {
+            "name": full_spec["name"],
+            "view": view_name,
+            "bg_hex": vs.bg_hex,
+        }
 
-    print(f"Saving palettes to {out_fn}.")
-    with open(out_fn, "w") as f:
-        yaml.dump(out, f)
+        path, ext = splitext(out_fn)
+        view_fn = f"{path}.{view_name}{ext}"
+
+        print(f"Solving palette {view_name}...")
+        palette = PaletteSolver(
+            view_name + "_palette", vs=vs, palette_spec=palette_spec
+        )
+        out |= palette.serialize()
+
+        print(f"Saving palette to {out_fn}.")
+        with open(view_fn, "w") as f:
+            yaml.dump(out, f)
+
+        if args.html:
+            html_fn = splitext(view_fn)[0] + ".html"
+            with open(html_fn, "w") as f:
+                print(f"Saving html to {html_fn}")
+                f.write(palette.dump_html())

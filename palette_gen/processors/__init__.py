@@ -6,37 +6,26 @@ from functools import lru_cache
 from logging import warning
 from typing import Any, Mapping, Union
 
-
-@dataclass()
-class ConcretePaletteViewSet:
-    name: str
-    view_map: Mapping[str, ConcretePalette]
-
-    @classmethod
-    def from_config(cls, raw_yaml: dict[str, Any]) -> ConcretePaletteViewSet:
-        view_map = {
-            view_name: ConcretePalette.from_config(view_dict)
-            for view_name, view_dict in raw_yaml["views"].items()
-        }
-        name = raw_yaml["name"]
-
-        return ConcretePaletteViewSet(name=name, view_map=view_map)
+# TODO use color class instead of str for hex colors
 
 
 @dataclass()
 class ConcretePalette:
+    name: str
+    view: str
+    bg_hex: str
     hex_map: Mapping[str, str]
 
     @classmethod
     def from_config(cls, palette_dict: dict[str, Any]) -> ConcretePalette:
         hex_map = {}
-        for palette_name, palette in palette_dict["palette"].items():
+        for palette_name, palette in palette_dict.pop("palette").items():
             for item in palette:
                 name = item["name"]
                 if name in hex_map:
                     warning(f"Duplicate color key {item}")
                 hex_map[name] = item["hex"]
-        return ConcretePalette(hex_map=hex_map)
+        return ConcretePalette(**palette_dict, hex_map=hex_map)
 
     @staticmethod
     @lru_cache(maxsize=1 << 16)

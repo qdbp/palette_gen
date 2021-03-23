@@ -1,5 +1,5 @@
 from dataclasses import astuple, dataclass
-from typing import Any, Optional, Type
+from typing import Any, Iterable, Optional, Type
 
 import numpy as np
 from matplotlib.colors import to_rgb
@@ -57,9 +57,9 @@ class HingeMinDistSolver(ColorSolver):
 
     seed: Optional[int] = None
 
-    def solve_for_context(self, bg_rgb: str, vs: ViewingSpec) -> list[Color]:
+    def _solve_colors(self, bg_rgb: str, vs: ViewingSpec) -> Iterable[Color]:
 
-        print(f"Solving palette {self.name}...")
+        print(f"Palette {self.name}...")
 
         if self.seed is not None:
             np.random.set_state(RandomState(MT19937(SeedSequence(self.seed))))

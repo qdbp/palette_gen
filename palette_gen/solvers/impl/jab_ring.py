@@ -2,21 +2,17 @@ from dataclasses import dataclass
 from typing import Any, Type
 
 import numpy as np
-from matplotlib.colors import to_rgb
-from numba import njit
-from scipy.optimize import minimize
-from scipy.special import expit
 
 from palette_gen.fastcolors import sRGB_to_XYZ_jit  # type: ignore
 from palette_gen.punishedcam import (  # type: ignore
     XYZ_to_PUNISHEDCAM_JabQMsh_jit,
 )
-from palette_gen.solvers import Color, T, ViewingSpec
-from palette_gen.solvers.color import ColorSolver
+from palette_gen.solvers import T
+from palette_gen.solvers.color import FixedJabTargetSolver
 
 
 @dataclass()
-class JabRingSpec(ColorSolver):
+class JabRingSpec(FixedJabTargetSolver):
     name: str
     n_colors: int
     m_lb: float
@@ -66,52 +62,6 @@ class JabRingSpec(ColorSolver):
         out[1::2, 2] = jbs[1::2] * mubs
 
         return out
-
-    def solve_for_context(self, bg_hex: str, vs: ViewingSpec) -> list[Color]:
-        logit_rgb = np.random.normal(size=(self.n_colors, 3)).ravel()
-        ab_offset = vs.rgb_to_cam(np.array(to_rgb(bg_hex))[None, :])[1:3]
-        jab_target = self.jab_target(ab_offset)
-
-        print(
-            f"Solving ring {self.name} with offset {ab_offset} from {bg_hex=}"
-        )
-
-        res = minimize(
-            self.loss,
-            logit_rgb,
-            args=(
-                jab_target,
-                vs.XYZw,
-                vs.Lsw,
-                vs.Lb,
-                vs.Lmax,
-            ),
-        )
-
-        # noinspection PyTypeChecker
-        return sorted(
-            Color(rgb=tuple(expit(rgb)), vs=vs)  # type: ignore
-            for rgb in res["x"].reshape((-1, 3))
-        )
-
-    # noinspection PyPep8Naming
-    @staticmethod
-    @njit  # type: ignore
-    def loss(
-        logit_rgb: np.ndarray,
-        jab_target: np.ndarray,
-        xyz_r: np.ndarray,
-        Lsw: float,
-        Lb: float,
-        Lmax: float,
-    ) -> float:
-        rgb = (1 / (1 + np.exp(-logit_rgb))).reshape((-1, 3))
-        jabqmsh = XYZ_to_PUNISHEDCAM_JabQMsh_jit(
-            sRGB_to_XYZ_jit(rgb), xyz_r, Lsw=Lsw, Lb=Lb, Lmax=Lmax
-        )
-        jab = jabqmsh[..., :3]
-        loss = ((jab - jab_target) ** 2).sum()
-        return loss  # type: ignore
 
     @classmethod
     def construct_from_config(cls: Type[T], conf: dict[str, Any]) -> T:

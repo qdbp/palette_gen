@@ -23,15 +23,20 @@ def main() -> None:
     sub_palette = sub.add_parser("palette", help="solve for palette colors")
     sub_palette.add_argument("spec", help="palette spec yaml config", type=str)
     sub_palette.add_argument(
+        "views",
+        help="Views to generate palettes for. If empty, generates all views.",
+        nargs="*",
+        type=str,
+    )
+    sub_palette.add_argument(
         "--html",
-        help="generate an html file showing the colors",
+        help="generate an html table showing the generated colors",
         action="store_true",
     )
     sub_palette.add_argument(
-        "views",
-        help="Views to generate palettes for. Will generate all if omitted.",
-        nargs="*",
-        type=str,
+        "--cone",
+        help="generate a 3D colorspace cone visualization of generated colors",
+        action="store_true",
     )
     sub_palette.set_defaults(cmd=gen_palette_cmd)
 

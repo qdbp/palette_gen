@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from itertools import chain
-from math import atan2
 from typing import Any
 
 import matplotlib.pyplot as plt
@@ -26,20 +25,18 @@ class PaletteSolver:
         self.name = name
         self.vs = vs
         self.p_specs = palette_spec
-
-        self.colors_dict: dict[str, list[Color]] = {
-            k: sorted(v, key=lambda x: atan2(x.jab[1], x.jab[2]))
-            for k, v in self._solve().items()
-        }
+        self.colors_dict = self._solve()
 
     def _solve(self) -> dict[str, list[Color]]:
-
         all_colors = {}
         for name, spec in self.p_specs.items():
-            # noinspection PyTypeChecker
-            all_colors[name] = sorted(
-                spec.solve_for_context(self.vs.bg_hex, self.vs)
-            )
+            solved_colors = spec.solve_for_context(self.vs.bg_hex, self.vs)
+            # don't sort here -- defer to organization defined by solver
+            if isinstance(solved_colors, list):
+                all_colors[name] = solved_colors.copy()
+            else:
+                for key, sublist in solved_colors.items():
+                    all_colors[name + key] = sublist.copy()
 
         return all_colors
 
@@ -67,7 +64,7 @@ class PaletteSolver:
             ],
         )
 
-    def draw_cone(self) -> None:
+    def draw_cone(self) -> Any:
         try:
             import plotly.graph_objects as go
         except ImportError as e:
@@ -78,7 +75,6 @@ class PaletteSolver:
             "square",
             "diamond",
             "x",
-            "cross",
         ]
 
         jab_arr = np.array(
@@ -95,8 +91,10 @@ class PaletteSolver:
         )
 
         symbols = []
-        for cx, colors in enumerate(self.colors_dict.values()):
-            symbols.extend([marker_cycle[cx]] * len(colors))
+        text = []
+        for px, (name, colors) in enumerate(self.colors_dict.items()):
+            symbols.extend([marker_cycle[px % len(marker_cycle)]] * len(colors))
+            text.extend([f"{name.upper()}{cx}" for cx in range(len(colors))])
 
         jab_edges = self.vs.rgb_to_cam(self.mk_cube_surface_grid())
 
@@ -112,6 +110,7 @@ class PaletteSolver:
                         symbol=symbols,
                     ),
                     mode="markers",
+                    text=text,
                 ),
                 go.Scatter3d(
                     x=jab_edges[:, 1],
@@ -122,8 +121,7 @@ class PaletteSolver:
                 ),
             ],
         )
-        fig.show()
-        fig.write_html("test.html")
+        return fig
 
     def draw_colors(self) -> None:
 

@@ -15,9 +15,7 @@ class FixedSolver(ColorSolver):
         self.fixed_dict = fixed_dict
         self.fixed_dict.pop("name", None)
 
-    def solve_for_context(
-        self, bg_hex: str, vs: ViewingSpec
-    ) -> Iterable[Color]:
+    def _solve_colors(self, bg_hex: str, vs: ViewingSpec) -> Iterable[Color]:
 
         for key, hex in self.fixed_dict.items():
             yield Color(rgb=to_rgb(hex), vs=vs, name=key)

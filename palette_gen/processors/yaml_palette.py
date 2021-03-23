@@ -8,6 +8,7 @@ from palette_gen.solvers import ViewingSpec
 from palette_gen.solvers.color import ColorSolver
 from palette_gen.solvers.impl.fixed import FixedSolver
 from palette_gen.solvers.impl.jab_ring import JabRingSpec
+from palette_gen.solvers.impl.tri_hex import TriHexSolver
 from palette_gen.solvers.palette import PaletteSolver
 
 
@@ -28,7 +29,11 @@ def gen_palette_cmd(args: Namespace) -> None:
         for name, view_args in full_spec["views"].items()
     }
 
-    constructors = {"jab_ring": JabRingSpec, "fixed": FixedSolver}
+    constructors = {
+        "jab_ring": JabRingSpec,
+        "fixed": FixedSolver,
+        "tri_hex": TriHexSolver,
+    }
 
     palette_spec: dict[str, ColorSolver] = {
         name: constructors[d.pop("type")].construct_from_config(  # type: ignore
@@ -65,8 +70,15 @@ def gen_palette_cmd(args: Namespace) -> None:
         with open(view_fn, "w") as f:
             yaml.dump(out, f)
 
+        base_fn = splitext(view_fn)[0]
         if args.html:
-            html_fn = splitext(view_fn)[0] + ".html"
+            html_fn = base_fn + ".html"
             with open(html_fn, "w") as f:
                 print(f"Saving html to {html_fn}")
                 f.write(palette.dump_html())
+
+        if args.cone:
+            fig = palette.draw_cone()
+            cone_fn = base_fn + ".cone.html"
+            print(f"Saving cone plot to {cone_fn}")
+            fig.write_html(cone_fn)

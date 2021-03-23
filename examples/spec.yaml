@@ -23,34 +23,20 @@ palette:
             fg_light: "#808080"
             bg_grey: "#e8e8e8"
             bg_grey_dark: "#d9d9d9"
+    salmons:
+        type: fixed
+        args:
             salmon_dark: "#CCBCAD"
             salmon: "#F2DFCE"
             salmon_hl: "#FFF1E4"
-    ult:
-        type: jab_ring
-        args:
-            n_colors: 6
-            m_lb: 27.0
-            m_ub: 27.0
-            j_lb: 0.54
-            j_ub: 0.54
     pri:
-        type: jab_ring
+        type: tri_hex
         args:
-            n_colors: 8
-            m_lb: 19.0
-            m_ub: 19.0
-            j_lb: 0.445
-            j_ub: 0.445
-    tone:
-        type: jab_ring
-        args:
-            n_colors: 6
-            j_lb: 0.305
-            j_ub: 0.305
-            m_lb: 13.0
-            m_ub: 13.0
-            hue_offset: 0.5
+            base_j: 0.38
+            neighbor_dist: 0.12
+            # skew must be between 1 / (√3 - 1) and √3
+            skew: 1.6
+            include_greys: false
     snd:
         type: jab_ring
         args:

@@ -2,7 +2,7 @@ from setuptools import find_packages, setup  # type: ignore
 
 setup(
     name="palette_gen",
-    version="0.8",
+    version="0.9",
     packages=find_packages(),
     url="http://github.com/qdbp/palette_gen",
     license="",

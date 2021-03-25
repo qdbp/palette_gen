@@ -8,6 +8,7 @@ from palette_gen.solvers import ViewingSpec
 from palette_gen.solvers.color import ColorSolver
 from palette_gen.solvers.impl.fixed import FixedRGBSolver
 from palette_gen.solvers.impl.jab_ring import JabRingSpec
+from palette_gen.solvers.impl.JMatchedGreys import JMatchedGreys
 from palette_gen.solvers.impl.tri_hex import TriHexSolver
 from palette_gen.solvers.palette import PaletteSolver
 
@@ -33,6 +34,7 @@ def gen_palette_cmd(args: Namespace) -> None:
         "jab_ring": JabRingSpec,
         "fixed": FixedRGBSolver,
         "tri_hex": TriHexSolver,
+        "greys": JMatchedGreys,
     }
 
     palette_spec: dict[str, ColorSolver] = {

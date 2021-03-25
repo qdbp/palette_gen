@@ -14,15 +14,16 @@ views:
         bg_hex: "#e8e8e8"
 palette:
     greys:
-        type: fixed
+        type: greys
         args:
-            black: "#000000"
-            white: "#ffffff"
-            fg: "#3f3f3f"
-            fg_grey: "#3f3f3f"
-            fg_light: "#808080"
-            bg_grey: "#e8e8e8"
-            bg_grey_dark: "#d9d9d9"
+            white: 1.00
+            bg_light: 0.975
+            bg: 0.90
+            bg_dark: 0.825
+            fg_light: 0.35
+            fg: 0.15
+            fg_dark: 0.075
+            black: 0.00
     salmons:
         type: fixed
         args:

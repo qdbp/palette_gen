@@ -32,19 +32,12 @@ palette:
     pri:
         type: tri_hex
         args:
-            base_j: 0.38
-            neighbor_dist: 0.12
-            # skew must be between 1 / (√3 - 1) and √3
-            skew: 1.6
-            include_greys: false
-    snd:
-        type: jab_ring
-        args:
-            n_colors: 4
-            j_lb: 0.45
-            j_ub: 0.45
-            m_lb: 4.0
-            m_ub: 4.0
+            base_j: 0.37
+            pitch: 0.12
+            ring0_name: tone
+            ring1_name: pri
+            ring2_name: ult
+            tints_name: tint
     hl:
         type: jab_ring
         args:
@@ -57,7 +50,7 @@ palette:
         type: jab_ring
         args:
             n_colors: 6
-            j_lb: 0.89
-            j_ub: 0.89
+            j_lb: 0.87
+            j_ub: 0.87
             m_lb: 5.0
             m_ub: 5.0

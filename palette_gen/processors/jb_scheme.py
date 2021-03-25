@@ -282,14 +282,14 @@ class JBScheme(XMLSerializable):
         print(f"Generating scheme for {palette.name}, view {palette.view}")
 
         color_spec = JBColorSpec(
-            JBAtomicOption(key, palette.subs(val))
+            JBAtomicOption(key, palette.subs(val).bare_hex)
             for key, val in scheme["colors"].items()
         )
         attrs = [
             JBAttrSpec(
                 name=key,
                 **{
-                    k: palette.subs(v) if k in COLOR_KEYS else str(v)
+                    k: palette.subs(v).bare_hex if k in COLOR_KEYS else str(v)
                     for k, v in val.items()
                 },
             )

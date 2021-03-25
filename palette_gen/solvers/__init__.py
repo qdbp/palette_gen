@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+import re
+from dataclasses import dataclass, field
 from functools import cached_property
 from typing import Optional, TypeVar, cast
 
 import numpy as np
-from matplotlib.colors import to_hex
+from matplotlib.colors import to_hex, to_rgb
 
 from palette_gen.fastcolors import (  # type: ignore
     cct_to_D_xyY_jit,
@@ -17,6 +18,7 @@ from palette_gen.punishedcam import (  # type: ignore
 )
 
 T = TypeVar("T")
+COLOR_PAT = re.compile("#?[0-9a-fA-F]{6}")
 
 
 @dataclass()
@@ -51,25 +53,36 @@ class ViewingSpec:
         return self.xyz_to_cam(self.rgb_to_xyz(rgb)).squeeze()
 
 
-@dataclass(frozen=True, order=True)
-class Color:
+@dataclass(order=True)
+class RGBColor:
+
     rgb: tuple[float, float, float]
-    vs: ViewingSpec
+    name: Optional[str] = field(init=False, default_factory=lambda: None)
 
-    name: Optional[str] = None
-
-    @cached_property
-    def jab(self) -> np.ndarray:
-        return self.vs.xyz_to_cam(  # type: ignore
-            self.vs.rgb_to_xyz(np.array(self.rgb))
-        )[0, :3]
+    @classmethod
+    def from_string(cls, s: str) -> RGBColor:
+        return RGBColor(rgb=to_rgb(s))
 
     @cached_property
     def hex(self) -> str:
         return cast(str, to_hex(self.rgb))
 
+    @cached_property
+    def bare_hex(self) -> str:
+        return self.hex.lstrip("#")
+
     def __str__(self) -> str:
-        return (
-            f"Color{f'({self.name})' if self.name else ''}"
-            f"[#{to_hex(self.rgb)}/{self.vs.name}]"
-        )
+        return f"Color[#{to_hex(self.rgb)}]"
+
+
+@dataclass(order=True)
+class JabColor(RGBColor):
+
+    vs: ViewingSpec
+
+    @cached_property
+    def jab(self) -> np.ndarray:
+        return self.vs.xyz_to_cam(self.vs.rgb_to_xyz(np.array(self.rgb)))[0, :3]
+
+    def __str__(self):
+        return f"JabColor[#{to_hex(self.rgb)}/{self.vs}]"

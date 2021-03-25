@@ -44,7 +44,7 @@ attributes:
     default_number: &number
         fg: pri000
     default_constant: &constant
-        fg: pri006
+        fg: pri005
         ft: 1
     default_doc_comment: &docstr
         fg: snd001
@@ -96,7 +96,7 @@ attributes:
         <<: *parameter
         ft: 1
     default_predefined_symbol: &predefined
-        fg: pri006
+        fg: pri005
         ft: 1
     default_reassigned_local_variable:
         base: default_local_variable

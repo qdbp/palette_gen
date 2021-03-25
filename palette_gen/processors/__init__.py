@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from functools import lru_cache
 from logging import warning
 from typing import Any, Mapping, Union
 
 # TODO use color class instead of str for hex colors
+from palette_gen.solvers import RGBColor
 
 
 @dataclass()
@@ -27,21 +27,7 @@ class ConcretePalette:
                 hex_map[name] = item["hex"]
         return ConcretePalette(**palette_dict, hex_map=hex_map)
 
-    @staticmethod
-    @lru_cache(maxsize=1 << 16)
-    def _depad_zero(s: str) -> str:
-        """
-        Takes a string like xyz0005 and returns xyz005.
-
-        Will be a nop if the string has no zeros when it does not end
-        with a zero, or a single zero when it does.
-        """
-
-        if s.count("0") - int(s.endswith("0")) > 0:
-            return re.sub("0", "", s, 1)
-        return s
-
-    def subs(self, color: Union[int, str]) -> str:
+    def subs(self, color: Union[int, str]) -> RGBColor:
         """
         Translates a color "in the wild" into a hex color based on this
         palette.
@@ -49,12 +35,37 @@ class ConcretePalette:
         Should be very liberal, bending over backwards to find some some
         valid interpretation.
         """
-        color = str(color)
-        while color not in self.hex_map:
-            new_color = self._depad_zero(color)
-            if new_color == color:
-                break
-            color = new_color
+        color = str(color).lower()
 
-        # TODO need to check if the returned color is valid
-        return self.hex_map.get(color, color)
+        try:
+            name, ix = re.findall("([a-z]+)_?([0-9]+)", color)[0]
+            ix = int(ix)
+            keys = list(
+                map(
+                    lambda s: s.format(name, ix),
+                    [
+                        "{}{}",
+                        "{}{:01d}",
+                        "{}{:02d}",
+                        "{}{:03d}",
+                        "{}{:04d}",
+                        "{}{:05d}",
+                    ],
+                )
+            )
+        except (IndexError, ValueError):
+            keys = [color]
+
+        for key in keys:
+            if key in self.hex_map:
+                mapped = self.hex_map[key]
+                break
+        else:
+            mapped = self.hex_map.get(color, color)
+
+        try:
+            return RGBColor.from_string(mapped)
+        except ValueError as e:
+            raise ValueError(
+                f"{mapped} is not a valid rgb color in this palette."
+            ) from e

@@ -11,7 +11,7 @@ from matplotlib.figure import Figure
 from matplotlib.gridspec import GridSpec
 
 from palette_gen.idiotic_html_generator import HTML
-from palette_gen.solvers import Color, ViewingSpec
+from palette_gen.solvers import RGBColor, ViewingSpec
 from palette_gen.solvers.color import ColorSolver
 
 
@@ -27,7 +27,7 @@ class PaletteSolver:
         self.p_specs = palette_spec
         self.colors_dict = self._solve()
 
-    def _solve(self) -> dict[str, list[Color]]:
+    def _solve(self) -> dict[str, list[RGBColor]]:
         all_colors = {}
         for name, spec in self.p_specs.items():
             solved_colors = spec.solve_for_context(self.vs.bg_hex, self.vs)
@@ -36,7 +36,12 @@ class PaletteSolver:
                 all_colors[name] = solved_colors.copy()
             else:
                 for key, sublist in solved_colors.items():
-                    all_colors[name + key] = sublist.copy()
+                    if key in all_colors:
+                        raise ValueError(
+                            f"Palette-generated key {key} conflicts with an"
+                            f"existing colorset."
+                        )
+                    all_colors[key] = sublist.copy()
 
         return all_colors
 

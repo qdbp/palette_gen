@@ -13,7 +13,7 @@ from palette_gen.punishedcam import (  # type: ignore
     XYZ_to_PUNISHEDCAM_JabQMsh_jit,
     de_punished_jab,
 )
-from palette_gen.solvers import Color, T, ViewingSpec
+from palette_gen.solvers import JabColor, RGBColor, T, ViewingSpec
 from palette_gen.solvers.color import ColorSolver
 
 
@@ -57,7 +57,7 @@ class HingeMinDistSolver(ColorSolver):
 
     seed: Optional[int] = None
 
-    def _solve_colors(self, bg_rgb: str, vs: ViewingSpec) -> Iterable[Color]:
+    def _solve_colors(self, bg_rgb: str, vs: ViewingSpec) -> Iterable[RGBColor]:
 
         print(f"Palette {self.name}...")
 
@@ -102,7 +102,7 @@ class HingeMinDistSolver(ColorSolver):
 
         # noinspection PyTypeChecker
         return sorted(
-            Color(rgb=tuple(expit(rgb)), vs=vs)  # type: ignore
+            JabColor(rgb=tuple(expit(rgb)), vs=vs)  # type: ignore
             for rgb in res["x"].reshape((-1, 3))
         )
 

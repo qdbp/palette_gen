@@ -1,24 +1,28 @@
+from dataclasses import dataclass
 from typing import Iterable, Type
 
 from matplotlib.colors import to_rgb
 
-from palette_gen.solvers import Color, T, ViewingSpec
+from palette_gen.solvers import JabColor, RGBColor, T, ViewingSpec
 from palette_gen.solvers.color import ColorSolver
 
 
-class FixedSolver(ColorSolver):
+@dataclass()
+class FixedRGBSolver(ColorSolver):
     """
-    Trivial 'solver' that just returns a fixed dictionary of colors.
+    Trivial 'solver' that returns a dictionary of colors of fixed RGB values.
     """
 
-    def __init__(self, fixed_dict: dict[str, str]):
-        self.fixed_dict = fixed_dict
+    fixed_dict: dict[str, str]
+
+    def __post_init__(self):
         self.fixed_dict.pop("name", None)
 
-    def _solve_colors(self, bg_hex: str, vs: ViewingSpec) -> Iterable[Color]:
-
-        for key, hex in self.fixed_dict.items():
-            yield Color(rgb=to_rgb(hex), vs=vs, name=key)
+    def _solve_colors(self, bg_hex: str, vs: ViewingSpec) -> Iterable[RGBColor]:
+        for name, hex in self.fixed_dict.items():
+            out = JabColor(rgb=to_rgb(hex), vs=vs)
+            out.name = name
+            yield out
 
     @classmethod
     def construct_from_config(cls: Type[T], conf: dict[str, str]) -> T:

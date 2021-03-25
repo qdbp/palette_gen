@@ -1,12 +1,12 @@
 from argparse import Namespace
-from os.path import splitext
+from os.path import abspath, splitext
 
 import numpy as np
 import yaml
 
 from palette_gen.solvers import ViewingSpec
 from palette_gen.solvers.color import ColorSolver
-from palette_gen.solvers.impl.fixed import FixedSolver
+from palette_gen.solvers.impl.fixed import FixedRGBSolver
 from palette_gen.solvers.impl.jab_ring import JabRingSpec
 from palette_gen.solvers.impl.tri_hex import TriHexSolver
 from palette_gen.solvers.palette import PaletteSolver
@@ -31,7 +31,7 @@ def gen_palette_cmd(args: Namespace) -> None:
 
     constructors = {
         "jab_ring": JabRingSpec,
-        "fixed": FixedSolver,
+        "fixed": FixedRGBSolver,
         "tri_hex": TriHexSolver,
     }
 
@@ -66,7 +66,7 @@ def gen_palette_cmd(args: Namespace) -> None:
         )
         out |= palette.serialize()
 
-        print(f"Saving palette to {out_fn}.")
+        print(f"Saving palette to {abspath(view_fn)}.")
         with open(view_fn, "w") as f:
             yaml.dump(out, f)
 

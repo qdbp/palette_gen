@@ -12,7 +12,6 @@ from palette_gen.util import map_leaves
 
 
 def process_theme(args: Namespace) -> None:
-
     with open(args.palette, "r") as f:
         palette = ConcretePalette.from_config(yaml.full_load(f))
 
@@ -29,11 +28,11 @@ def process_theme(args: Namespace) -> None:
     editor_scheme = meta["scheme"] + f".{palette.view}.xml"
 
     icon_section: dict[str, Any] = map_leaves(  # type: ignore
-        lambda x: palette.subs(x), theme_config["icons"]  # type: ignore
+        lambda x: palette.subs(x).hex, theme_config["icons"]  # type: ignore
     )
 
     if args.inline_colors:
-        ui_dict = map_leaves(lambda x: palette.subs(x), theme_config["ui"])
+        ui_dict = map_leaves(lambda x: palette.subs(x).hex, theme_config["ui"])
     else:
         ui_dict = theme_config["ui"]
 

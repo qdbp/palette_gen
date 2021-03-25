@@ -10,7 +10,7 @@ from scipy.special import expit
 
 from palette_gen.fastcolors import sRGB_to_XYZ_jit
 from palette_gen.punishedcam import XYZ_to_PUNISHEDCAM_JabQMsh_jit
-from palette_gen.solvers import Color, T, ViewingSpec
+from palette_gen.solvers import JabColor, RGBColor, T, ViewingSpec
 
 
 class ColorSolver(ABC):
@@ -22,14 +22,14 @@ class ColorSolver(ABC):
     @final
     def solve_for_context(
         self, bg_hex: str, vs: ViewingSpec
-    ) -> Union[list[Color], dict[str, list[Color]]]:
+    ) -> Union[list[RGBColor], dict[str, list[RGBColor]]]:
         """
         Solves for a set of colors based on a viewing spec.
         """
         return self.organize_colors(self._solve_colors(bg_hex, vs))
 
     @abstractmethod
-    def _solve_colors(self, bg_hex: str, vs: ViewingSpec) -> Iterable[Color]:
+    def _solve_colors(self, bg_hex: str, vs: ViewingSpec) -> Iterable[RGBColor]:
         """
         Implementation of solve_for_context.
 
@@ -44,8 +44,8 @@ class ColorSolver(ABC):
         return cls(**conf)  # type: ignore
 
     def organize_colors(
-        self, raw_colors: Iterable[Color]
-    ) -> Union[list[Color], dict[str, list[Color]]]:
+        self, raw_colors: Iterable[RGBColor]
+    ) -> Union[list[RGBColor], dict[str, list[RGBColor]]]:
         """
         Groups, sorts and labels the colors returned by _solve.
 
@@ -64,7 +64,7 @@ class ColorSolver(ABC):
         return self.hue_sort(raw_colors)
 
     @staticmethod
-    def hue_sort(colors: Iterable[Color]) -> list[Color]:
+    def hue_sort(colors: Iterable[RGBColor]) -> list[RGBColor]:
         return sorted(colors, key=lambda c: -atan2(c.jab[1], c.jab[2]))
 
 
@@ -90,7 +90,7 @@ class FixedJabTargetSolver(ColorSolver, ABC):
         """
 
     @final
-    def _solve_colors(self, bg_hex: str, vs: ViewingSpec) -> Iterable[Color]:
+    def _solve_colors(self, bg_hex: str, vs: ViewingSpec) -> Iterable[RGBColor]:
 
         ab_offset = vs.rgb_to_cam(np.array(to_rgb(bg_hex))[None, :])[1:3]
         jab_target = self.jab_target(ab_offset)
@@ -120,7 +120,8 @@ class FixedJabTargetSolver(ColorSolver, ABC):
         )
 
         return map(
-            lambda x: Color(tuple(x), vs=vs), expit(res["x"]).reshape((-1, 3))
+            lambda x: JabColor(rgb=tuple(x), vs=vs),
+            expit(res["x"]).reshape((-1, 3)),
         )
 
     # noinspection PyPep8Naming

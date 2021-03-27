@@ -30,19 +30,56 @@ palette:
             salmon_dark: "#CCBCAD"
             salmon: "#F2DFCE"
             salmon_hl: "#FFF1E4"
+    # pri:
+    #     type: tri_hex
+    #     args:
+    #         base_j: 0.37
+    #         pitch: 0.12
+    #         ring0_name: tone
+    #         ring1_name: pri
+    #         ring2_name: ult
+    #         tints_name: tint
+    # alt_pri:
+    #     type: cylinder
+    #     args:
+    #         base_j: 0.30
+    #         base_m: 15
+    #         n_colors: 8
+    #         n_rings: 4
+    #         ring_names:
+    #         - xtone
+    #         - xpri
+    #         - xult
+    #         - xtint
     pri:
-        type: tri_hex
+        type: jab_ring
         args:
-            base_j: 0.37
-            pitch: 0.12
-            ring0_name: tone
-            ring1_name: pri
-            ring2_name: ult
-            tints_name: tint
+            n_colors: 8
+            j_lb: 0.30
+            j_ub: 0.30
+            m_lb: 15
+            m_ub: 15
+    ult:
+        type: jab_ring
+        args:
+            n_colors: 8
+            j_lb: 0.45
+            j_ub: 0.45
+            m_lb: 20
+            m_ub: 20
+            hue_offset: 0.5
+    tint:
+        type: jab_ring
+        args:
+            n_colors: 8
+            j_lb: 0.55
+            j_ub: 0.55
+            m_lb: 15
+            m_ub: 15
     hl:
         type: jab_ring
         args:
-            n_colors: 6
+            n_colors: 8
             j_lb: 0.83
             j_ub: 0.83
             m_lb: 12.0
@@ -50,8 +87,16 @@ palette:
     bg:
         type: jab_ring
         args:
-            n_colors: 6
+            n_colors: 8
             j_lb: 0.87
             j_ub: 0.87
             m_lb: 5.0
             m_ub: 5.0
+    wht:
+        type: jab_ring
+        args:
+            n_colors: 8
+            j_lb: 0.90
+            j_ub: 0.90
+            m_lb: 3.499
+            m_ub: 3.499

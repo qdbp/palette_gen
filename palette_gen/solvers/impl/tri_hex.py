@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Iterable, Union
+from typing import Iterable, Optional, Union
 
 import numpy as np
 
@@ -10,14 +10,17 @@ from palette_gen.solvers.color import ColorSolver, FixedJabTargetSolver
 @dataclass()
 class TriHexSolver(FixedJabTargetSolver):
     """
-    Solves solves for a set of colors from a sparsified hexagonal-close-packed
-    lattice in Jab'p space. Sounds like Real Science™!
+    Solves solves for a set of colors from an arrangement loosely based on
+    hexagonal-close-packing.
 
-    Specifically, of three HCP layers, colors are taken as lattice
-    points from the first and third directly. The second is sparsified,
-    to give six "sparse" colors at a (relative) pitch of 1 + 1/√3 from
-    grey, where the pitch of the first ring is taken to equal 1 (i.e.
-    the sphere radius is 1/2 in the associated sphere pack)
+    Produces three lightness-levels of colors, with six each in the bottom
+    two levels, ans two sets of six from the top, for a total of 24 colors.
+
+    Parameters
+    __________
+
+    j_scale:
+        scales the lightness-spacing of the lattice by this factor.
     """
 
     name: str
@@ -27,10 +30,12 @@ class TriHexSolver(FixedJabTargetSolver):
     first_ring_offset: float = 0.0
     alt_tones: bool = False
 
-    ring0_name: str = None
-    ring1_name: str = None
-    ring2_name: str = None
-    tints_name: str = None
+    j_scale: float = 1.0
+
+    ring0_name: Optional[str] = None
+    ring1_name: Optional[str] = None
+    ring2_name: Optional[str] = None
+    tints_name: Optional[str] = None
 
     @staticmethod
     def unit_hex(offset: float) -> np.ndarray:
@@ -71,12 +76,14 @@ class TriHexSolver(FixedJabTargetSolver):
         out[12:18, 1:] = (
             self.pitch
             * (1 + 1 / np.sqrt(3))
-            * self.unit_hex(self.first_ring_offset + 0.5)
+            * self.unit_hex(self.first_ring_offset)
         )
-        out[18:24, 1:] = self.pitch * self.unit_hex(self.first_ring_offset)
+        out[18:24, 1:] = self.pitch * self.unit_hex(
+            self.first_ring_offset + 0.5
+        )
 
         # h as defined in the notebook
-        h = self.pitch * np.sqrt(2 / 3)
+        h = self.pitch * np.sqrt(2 / 3) * self.j_scale
 
         out[:6, 0] = self.base_j  # first ring
         out[6:12, 0] = self.base_j + h  # second ring

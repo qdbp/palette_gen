@@ -49,7 +49,7 @@ class JabRingSpec(FixedJabTargetSolver):
         mubs = self.m_ub * np.ones(self.n_colors // 2) / 100
         mlbs = self.m_lb * np.ones(self.n_colors // 2) / 100
 
-        # start with 0.05 to avoid hue misalignmenet between pri/tones
+        # start with 0.05 to avoid hue misalignment between pri/tones
         # etc in the output
         angles = np.linspace(0.05, 2 * np.pi, num=self.n_colors, endpoint=False)
         angles += self.hue_offset * (angles[1] - angles[0])

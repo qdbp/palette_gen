@@ -6,6 +6,7 @@ import yaml
 
 from palette_gen.solvers import ViewingSpec
 from palette_gen.solvers.color import ColorSolver
+from palette_gen.solvers.impl.cylinder_mesh import CylinderMesh
 from palette_gen.solvers.impl.fixed import FixedRGBSolver
 from palette_gen.solvers.impl.jab_ring import JabRingSpec
 from palette_gen.solvers.impl.JMatchedGreys import JMatchedGreys
@@ -34,6 +35,7 @@ def gen_palette_cmd(args: Namespace) -> None:
         "jab_ring": JabRingSpec,
         "fixed": FixedRGBSolver,
         "tri_hex": TriHexSolver,
+        "cylinder": CylinderMesh,
         "greys": JMatchedGreys,
     }
 

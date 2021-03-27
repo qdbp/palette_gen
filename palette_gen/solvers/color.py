@@ -3,7 +3,6 @@ from math import atan2
 from typing import Any, Iterable, Type, Union, final
 
 import numpy as np
-from matplotlib.colors import to_rgb
 from numba import njit
 from scipy.optimize import minimize
 from scipy.special import expit
@@ -92,8 +91,10 @@ class FixedJabTargetSolver(ColorSolver, ABC):
     @final
     def _solve_colors(self, bg_hex: str, vs: ViewingSpec) -> Iterable[RGBColor]:
 
-        ab_offset = vs.rgb_to_cam(np.array(to_rgb(bg_hex))[None, :])[1:3]
-        jab_target = self.jab_target(ab_offset)
+        # TODO this simplistic adjustment distorts low-lightness colors too much
+        #  need a better approach
+        # ab_offset = vs.rgb_to_cam(np.array(to_rgb(bg_hex))[None, :])[1:3]
+        jab_target = self.jab_target(np.zeros(2))
 
         if jab_target.ndim != 2 or jab_target.shape[1] != 3:
             raise RuntimeError(

@@ -76,7 +76,9 @@ def gen_palette(
             "bg_hex": vs.bg_hex,
         }
 
-        view_fn = out_path.parent.joinpath(out_path.stem + view_name + out_path.suffix)
+        view_fn = out_path.parent.joinpath(
+            f"{out_path.stem}.{view_name}{out_path.suffix}"
+        )
 
         print(f"Solving palette {view_name}...")
         palette = PaletteSolver(view_name + "_palette", vs=vs, palette_spec=palette_spec)

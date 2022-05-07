@@ -8,6 +8,7 @@ Evgeny Naumov, 2020
 import numpy as np
 from colour import XYZ_to_CIECAM02
 from numba import njit
+from numpy.typing import NDArray
 
 from palette_gen.fastcolors import (
     XYZ_D65,
@@ -45,7 +46,9 @@ CIECAM02_arange = np.array([*range(len(CIECAM02_hs))])
 
 
 @njit
-def matmul_last_axis(mat: np.ndarray, vecs: np.ndarray) -> np.ndarray:
+def matmul_last_axis(
+    mat: NDArray[np.float64], vecs: NDArray[np.float64]
+) -> NDArray[np.float64]:
     """
     Applies
         v = Mu
@@ -71,8 +74,8 @@ def matmul_last_axis(mat: np.ndarray, vecs: np.ndarray) -> np.ndarray:
 @njit
 def XYZ_to_PUNISHEDCAM_JabQMsh_jit(
     # no defaults -- perfection of bust!
-    XYZ: np.ndarray,
-    XYZr: np.ndarray,
+    XYZ: NDArray[np.float64],
+    XYZr: NDArray[np.float64],
     Lsw: float,
     Lb: float,
     Lmax: float,
@@ -81,7 +84,7 @@ def XYZ_to_PUNISHEDCAM_JabQMsh_jit(
     do_hk_correction: bool = True,
     do_make_jab_ucs: bool = True,
     do_make_rest_ucs: bool = True,
-) -> np.ndarray:
+) -> NDArray[np.float64]:
     """
     Converts XYZ to a cursed and punished version of CIECAM02-(UCS).
 
@@ -209,7 +212,7 @@ def XYZ_to_PUNISHEDCAM_JabQMsh_jit(
     # TODO to me Lb makes the most sense as the "intended" quantity here
     #   luminance adaptation, but this needs to be looked at better
     k = 1 / (Lb + 1)
-    _k4 = k ** 4
+    _k4 = k**4
     F_L = 0.2 * _k4 * Lb + 0.1 * ((1 - _k4) ** 2) * Lb ** (1 / 3)
 
     # noinspection DuplicatedCode
@@ -233,13 +236,13 @@ def XYZ_to_PUNISHEDCAM_JabQMsh_jit(
     et = 0.25 * (cos_deg(h + 360 / np.pi) + 3.8)
 
     n = Yb / XYZr[..., 1]
-    z = 1.48 + n ** 0.5
+    z = 1.48 + n**0.5
 
     # Park (2014) modifications: MobileCam-v1 exponent for Ncb
     # relevant for bright surrounds (working in daylight conditions)
-    Nbb = 0.725 * n ** -0.2
+    Nbb = 0.725 * n**-0.2
     if do_ncb_fix:
-        Ncb = 0.725 * n ** -0.1425
+        Ncb = 0.725 * n**-0.1425
     else:
         Ncb = Nbb
 
@@ -249,14 +252,10 @@ def XYZ_to_PUNISHEDCAM_JabQMsh_jit(
     # J ∈ [0, 1]
     J = (A / Ar) ** (c * z)
 
-    t = (
-        (50_000 / 13)
-        * (Nc * Ncb * et * np.sqrt(a * a + b * b))
-        / (L + M + 21 * S / 20)
-    )
+    t = (50_000 / 13) * (Nc * Ncb * et * np.sqrt(a * a + b * b)) / (L + M + 21 * S / 20)
 
-    C = t ** 0.9 * (J ** 0.5) * (1.64 - 0.29 ** n) ** 0.73
-    M = C * F_L ** 0.25
+    C = t**0.9 * (J**0.5) * (1.64 - 0.29**n) ** 0.73
+    M = C * F_L**0.25
 
     ###
     # 3.2 second-pass HK-effect correction due to Kim (2018)
@@ -273,7 +272,7 @@ def XYZ_to_PUNISHEDCAM_JabQMsh_jit(
         J += 0.0184 * f2 * f1 * M
 
     # define Q after updating J for HK-effect
-    Q = (4 / c) * (J ** 0.5) * (Ar + 4) * F_L ** 0.25
+    Q = (4 / c) * (J**0.5) * (Ar + 4) * F_L**0.25
 
     # s ∈ [0, 1]
     s = (M / Q) ** 0.5
@@ -292,7 +291,7 @@ def XYZ_to_PUNISHEDCAM_JabQMsh_jit(
         b = _Mp * sin_deg(h)
         if do_make_rest_ucs:
             M = _Mp
-            Q = (4 / c) * (J ** 0.5) * (Ar + 4) * F_L ** 0.25
+            Q = (4 / c) * (J**0.5) * (Ar + 4) * F_L**0.25
             s = (M / Q) ** 0.5
             # hue stays the same by construction
 
@@ -311,7 +310,9 @@ def XYZ_to_PUNISHEDCAM_JabQMsh_jit(
 
 # noinspection PyPep8Naming
 @njit
-def de_punished_jab(jab1: np.ndarray, jab2: np.ndarray) -> np.ndarray:
+def de_punished_jab(
+    jab1: NDArray[np.float64], jab2: NDArray[np.float64]
+) -> NDArray[np.float64]:
     return np.sqrt(((jab1[..., :3] - jab2[..., :3]) ** 2).sum(axis=-1))
 
 
@@ -331,13 +332,7 @@ if __name__ == "__main__":
     ref = XYZ_to_CIECAM02(xyz, XYZ_D65, L_A=5.0, Y_b=0.8)
     print(np.vstack([ref.J, ref.Q, ref.M, ref.h]).T)
 
-    out = XYZ_to_PUNISHEDCAM_JabQMsh_jit(
-        xyz,
-        XYZ_D65,
-        Lsw=1,
-        Lb=4,
-        Lmax=15,
-    )
+    out = XYZ_to_PUNISHEDCAM_JabQMsh_jit(xyz, XYZ_D65, Lsw=1, Lb=4, Lmax=15)
     out[..., 0] *= 100
 
     print(out[..., [0, 3, 5, 8]])

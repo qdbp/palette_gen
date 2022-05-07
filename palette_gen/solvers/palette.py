@@ -9,25 +9,23 @@ from matplotlib.axes import Axes
 from matplotlib.colors import to_hex, to_rgb
 from matplotlib.figure import Figure
 from matplotlib.gridspec import GridSpec
+from numpy.typing import NDArray
 
 from palette_gen.idiotic_html_generator import HTML
-from palette_gen.solvers import RGBColor, ViewingSpec
+from palette_gen.solvers import JabColor, ViewingSpec
 from palette_gen.solvers.color import ColorSolver
 
 
 class PaletteSolver:
     def __init__(
-        self,
-        name: str,
-        vs: ViewingSpec,
-        palette_spec: dict[str, ColorSolver],
+        self, name: str, vs: ViewingSpec, palette_spec: dict[str, ColorSolver]
     ) -> None:
         self.name = name
         self.vs = vs
         self.p_specs = palette_spec
         self.colors_dict = self._solve()
 
-    def _solve(self) -> dict[str, list[RGBColor]]:
+    def _solve(self) -> dict[str, list[JabColor]]:
         all_colors = {}
         for name, spec in self.p_specs.items():
             solved_colors = spec.solve_for_context(self.vs.bg_hex, self.vs)
@@ -46,7 +44,7 @@ class PaletteSolver:
         return all_colors
 
     @staticmethod
-    def mk_cube_surface_grid(pps: int = 20) -> np.ndarray:
+    def mk_cube_surface_grid(pps: int = 20) -> NDArray[np.float64]:
         """
         Generates a regular grid over the surface of the {0,1}^3 corner unit
         cube.
@@ -59,14 +57,14 @@ class PaletteSolver:
         return np.concatenate(  # type: ignore
             [
                 np.stack(
-                    np.meshgrid(
+                    np.meshgrid(  # type: ignore
                         *([base] * ix + [edges] + [base] * (cube_dim - ix - 1)),
                         indexing="ij",
                     ),
                     axis=-1,
                 ).reshape(-1, 3)
                 for ix in range(cube_dim)
-            ],
+            ]
         )
 
     def draw_cone(self) -> Any:
@@ -75,24 +73,13 @@ class PaletteSolver:
         except ImportError as e:
             raise RuntimeError("Drawing the cone requires plotly.") from e
 
-        marker_cycle = [
-            "circle",
-            "square",
-            "diamond",
-            "x",
-        ]
+        marker_cycle = ["circle", "square", "diamond", "x"]
 
         jab_arr = np.array(
-            list(
-                color.jab
-                for color in chain.from_iterable(self.colors_dict.values())
-            )
+            list(color.jab for color in chain.from_iterable(self.colors_dict.values()))
         )
         rgb_arr = np.array(
-            list(
-                color.rgb
-                for color in chain.from_iterable(self.colors_dict.values())
-            )
+            list(color.rgb for color in chain.from_iterable(self.colors_dict.values()))
         )
 
         symbols = []
@@ -109,11 +96,7 @@ class PaletteSolver:
                     x=jab_arr[..., 1],
                     y=jab_arr[..., 2],
                     z=jab_arr[..., 0],
-                    marker=dict(
-                        color=list(map(to_hex, rgb_arr)),
-                        size=6,
-                        symbol=symbols,
-                    ),
+                    marker=dict(color=list(map(to_hex, rgb_arr)), size=6, symbol=symbols),
                     mode="markers",
                     text=text,
                 ),
@@ -124,7 +107,7 @@ class PaletteSolver:
                     marker=dict(color="black", size=1),
                     mode="markers",
                 ),
-            ],
+            ]
         )
         return fig
 
@@ -149,13 +132,7 @@ class PaletteSolver:
                     color=color.hex,
                 )
                 axl.scatter(0, gx, s=500, marker=marker, color=color.hex)
-                axl.text(
-                    1,
-                    gx,
-                    color.hex,
-                    color="grey",
-                    fontsize="small",
-                )
+                axl.text(1, gx, color.hex, color="grey", fontsize="small")
                 gx += 1
 
         axl.set_xlim(-1, 2.5)

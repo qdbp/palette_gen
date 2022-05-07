@@ -2,11 +2,8 @@ from dataclasses import dataclass
 from typing import Any, Type
 
 import numpy as np
+from numpy.typing import NDArray
 
-from palette_gen.fastcolors import sRGB_to_XYZ_jit  # type: ignore
-from palette_gen.punishedcam import (  # type: ignore
-    XYZ_to_PUNISHEDCAM_JabQMsh_jit,
-)
 from palette_gen.solvers import T
 from palette_gen.solvers.color import FixedJabTargetSolver
 
@@ -25,7 +22,7 @@ class JabRingSpec(FixedJabTargetSolver):
     def __post_init__(self) -> None:
         assert self.n_colors > 1 and not self.n_colors % 2
 
-    def jab_target(self, ab_offset: np.ndarray) -> np.ndarray:
+    def jab_target(self, ab_offset: NDArray[np.float64]) -> NDArray[np.float64]:
         """
         Gets the jab targets corresponding to the ring positions.
 
@@ -40,7 +37,7 @@ class JabRingSpec(FixedJabTargetSolver):
         an array of shape (self.n_colors, 3) of the jab targets
         """
 
-        out = np.ndarray((self.n_colors, 3))
+        out = np.empty((self.n_colors, 3))
 
         out[::2, 0] = self.j_ub * np.ones(self.n_colors // 2)
         out[1::2, 0] = self.j_lb * np.ones(self.n_colors // 2)

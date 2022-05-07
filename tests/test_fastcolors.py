@@ -11,6 +11,7 @@ from colour import (
     sRGB_to_XYZ,
 )
 from colour.difference import delta_E_CIE2000
+from numpy.typing import NDArray
 
 from palette_gen.fastcolors import (
     HSV_to_RGB_jit,
@@ -28,7 +29,7 @@ from palette_gen.fastcolors import (
 )
 
 
-def get_random_01x01x01_with_corners(size: int = 1000) -> np.ndarray:
+def get_random_01x01x01_with_corners(size: int = 1000) -> NDArray[np.float64]:
 
     hsv = np.random.random(size=(size, 3))
     # (literal) corner cases -- important!
@@ -86,9 +87,7 @@ def test_de2000() -> None:
     de = delta_E_CIE2000(lab[:-1], lab[1:])
     my_de = dE_2000_jit(lab[:-1], lab[1:])
 
-    assert np.allclose(de, my_de), np.hstack(
-        [de.reshape(-1, 1), my_de.reshape(-1, 1)]
-    )
+    assert np.allclose(de, my_de), np.hstack([de.reshape(-1, 1), my_de.reshape(-1, 1)])
 
 
 def test_cct() -> None:

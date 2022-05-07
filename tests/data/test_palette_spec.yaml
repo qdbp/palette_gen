@@ -1,0 +1,31 @@
+name: PaletteGenTest
+views:
+    Night:
+        T: 5000
+        Lsw: 1
+        Lmax: 5
+        Lb: 2
+        bg_hex: "#ECE6DD"
+palette:
+    jab_ring:
+        type: jab_ring
+        args:
+            n_colors: 6
+            j_lb: 0.26
+            j_ub: 0.28
+            m_lb: 15
+            m_ub: 17
+            hue_offset: -0.12
+    greys:
+        type: greys
+        args:
+            white: 0.97
+            bg_light: 0.92
+            bg: 0.90
+            bg_dark: 0.80
+            bg_darker: 0.73
+            neutral: 0.5
+            fg_light: 0.35
+            fg: 0.15
+            fg_dark: 0.07
+            black: 0.00

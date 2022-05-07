@@ -1,10 +1,11 @@
 from dataclasses import dataclass
-from typing import Iterable, Optional, Union
+from typing import Iterable
 
 import numpy as np
+from numpy.typing import NDArray
 
-from palette_gen.solvers import RGBColor
-from palette_gen.solvers.color import ColorSolver, FixedJabTargetSolver
+from palette_gen.solvers import JabColor
+from palette_gen.solvers.color import ColorSolver, FixedJabTargetSolver, OrganizedColors
 
 
 @dataclass()
@@ -32,13 +33,13 @@ class TriHexSolver(FixedJabTargetSolver):
 
     j_scale: float = 1.0
 
-    ring0_name: Optional[str] = None
-    ring1_name: Optional[str] = None
-    ring2_name: Optional[str] = None
-    tints_name: Optional[str] = None
+    ring0_name: str | None = None
+    ring1_name: str | None = None
+    ring2_name: str | None = None
+    tints_name: str | None = None
 
     @staticmethod
-    def unit_hex(offset: float) -> np.ndarray:
+    def unit_hex(offset: float) -> NDArray[np.float64]:
         """
         Offset measured in units of angle between colors.
 
@@ -46,15 +47,14 @@ class TriHexSolver(FixedJabTargetSolver):
         """
 
         out = np.empty((6, 2))
-        xs = (
-            np.linspace(0, 2 * np.pi, num=6, endpoint=False)
-            + offset * np.pi / 3
+        xs: NDArray[np.float64] = (
+            np.linspace(0, 2 * np.pi, num=6, endpoint=False) + offset * np.pi / 3
         )
         out[:, 0] = np.cos(xs)
         out[:, 1] = np.sin(xs)
         return out
 
-    def jab_target(self, ab_offset: np.ndarray) -> np.ndarray:
+    def jab_target(self, ab_offset: NDArray[np.float64]) -> NDArray[np.float64]:
 
         # array layout:
         # 0:6 first ring primaries
@@ -74,13 +74,9 @@ class TriHexSolver(FixedJabTargetSolver):
             * self.unit_hex(self.first_ring_offset + 0.5)
         )
         out[12:18, 1:] = (
-            self.pitch
-            * (1 + 1 / np.sqrt(3))
-            * self.unit_hex(self.first_ring_offset)
+            self.pitch * (1 + 1 / np.sqrt(3)) * self.unit_hex(self.first_ring_offset)
         )
-        out[18:24, 1:] = self.pitch * self.unit_hex(
-            self.first_ring_offset + 0.5
-        )
+        out[18:24, 1:] = self.pitch * self.unit_hex(self.first_ring_offset + 0.5)
 
         # h as defined in the notebook
         h = self.pitch * np.sqrt(2 / 3) * self.j_scale
@@ -94,19 +90,14 @@ class TriHexSolver(FixedJabTargetSolver):
 
         return out
 
-    def organize_colors(
-        self, raw_colors: Iterable[RGBColor]
-    ) -> Union[list[RGBColor], dict[str, list[RGBColor]]]:
+    def organize_colors(self, raw_colors: Iterable[JabColor]) -> OrganizedColors:
 
         raw_colors = list(raw_colors)
         out = {
-            self.ring0_name
-            or self.name + "r0": ColorSolver.hue_sort(raw_colors[0:6]),
-            self.ring1_name
-            or self.name + "r1": ColorSolver.hue_sort(raw_colors[6:12]),
+            self.ring0_name or self.name + "r0": ColorSolver.hue_sort(raw_colors[0:6]),
+            self.ring1_name or self.name + "r1": ColorSolver.hue_sort(raw_colors[6:12]),
             self.tints_name
             or self.name + "tint": ColorSolver.hue_sort(raw_colors[18:24]),
-            self.ring2_name
-            or self.name + "r2": ColorSolver.hue_sort(raw_colors[12:18]),
+            self.ring2_name or self.name + "r2": ColorSolver.hue_sort(raw_colors[12:18]),
         }
         return out

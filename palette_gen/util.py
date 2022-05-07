@@ -1,12 +1,12 @@
-from typing import Any, Callable, TypeVar, Union
+from typing import Any, Callable, TypeVar
 
 T = TypeVar("T")
 V = TypeVar("V")
 
 
 def map_leaves(
-    fun: Callable[..., V], arg: Union[T, list[Any], dict[str, Any]]
-) -> Union[V, list[Any], dict[str, Any]]:
+    fun: Callable[..., V], arg: T | list[Any] | dict[str, Any]
+) -> V | list[Any] | dict[str, Any]:
 
     if isinstance(arg, dict):
         return {k: map_leaves(fun, v) for k, v in arg.items()}

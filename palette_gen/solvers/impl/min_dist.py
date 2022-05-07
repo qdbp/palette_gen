@@ -1,10 +1,11 @@
 from dataclasses import astuple, dataclass
-from typing import Any, Iterable, Optional, Type
+from typing import Any, Iterable, Type
 
 import numpy as np
 from matplotlib.colors import to_rgb
 from numba import njit
 from numpy.random import MT19937, RandomState, SeedSequence
+from numpy.typing import NDArray
 from scipy.optimize import minimize
 from scipy.special import expit
 
@@ -13,7 +14,7 @@ from palette_gen.punishedcam import (  # type: ignore
     XYZ_to_PUNISHEDCAM_JabQMsh_jit,
     de_punished_jab,
 )
-from palette_gen.solvers import JabColor, RGBColor, T, ViewingSpec
+from palette_gen.solvers import JabColor, T, ViewingSpec
 from palette_gen.solvers.color import ColorSolver
 
 
@@ -25,7 +26,9 @@ class HingeSpec:
 
 
 @njit  # type: ignore
-def hinge_loss(arr: np.ndarray, lb: float, ub: float, α: float) -> np.ndarray:
+def hinge_loss(
+    arr: NDArray[np.float64], lb: float, ub: float, α: float
+) -> NDArray[np.float64]:
     flat_arr = arr.ravel()
     out = np.zeros_like(flat_arr)
 
@@ -55,14 +58,15 @@ class HingeMinDistSolver(ColorSolver):
     de_hinge: HingeSpec
     hue_gap_hinge: HingeSpec
 
-    seed: Optional[int] = None
+    seed: int | None = None
 
-    def _solve_colors(self, bg_rgb: str, vs: ViewingSpec) -> Iterable[RGBColor]:
+    def _solve_colors(self, bg_rgb: str, vs: ViewingSpec) -> Iterable[JabColor]:
 
         print(f"Palette {self.name}...")
 
         if self.seed is not None:
-            np.random.set_state(RandomState(MT19937(SeedSequence(self.seed))))
+            state = RandomState(MT19937(SeedSequence(self.seed)))  # type: ignore
+            np.random.set_state(state)  # type: ignore
 
         rgb = np.random.normal(size=(self.n_colors, 3)).ravel()
         out_jab = np.zeros((self.n_colors, 3))
@@ -109,14 +113,14 @@ class HingeMinDistSolver(ColorSolver):
     @staticmethod
     @njit  # type: ignore
     def loss(
-        logit_rgb: np.ndarray,
-        out_jab: np.ndarray,
-        out_loss: np.ndarray,
-        xyz_r: np.ndarray,
+        logit_rgb: NDArray[np.float64],
+        out_jab: NDArray[np.float64],
+        out_loss: NDArray[np.float64],
+        xyz_r: NDArray[np.float64],
         Lsw: float,
         Lb: float,
         Lmax: float,
-        background_jab: np.ndarray,
+        background_jab: NDArray[np.float64],
         j_min: float,
         j_max: float,
         j_alpha: float,
@@ -142,7 +146,7 @@ class HingeMinDistSolver(ColorSolver):
         pairwise_de = de_punished_jab(
             jabqmsh.reshape((-1, 1, 7)), jabqmsh.reshape((1, -1, 7))
         )
-        pairwise_de += np.diag(np.ones(n_colors))
+        pairwise_de += np.diag(np.ones(n_colors))  # type: ignore
 
         # calculate hue gaps
         hues = np.zeros(n_colors)
@@ -161,7 +165,7 @@ class HingeMinDistSolver(ColorSolver):
             hg[0] = max(hg[0], hues[i + 1] - hues[i])
         hg[0] = max(hg[0], hues[0] + 1 - hues[-1])
 
-        out_loss[0] = -np.log(np.min(pairwise_de))
+        out_loss[0] = -np.log(np.min(pairwise_de))  # type: ignore
         out_loss[1] = hinge_loss(jabqmsh[..., 0], j_min, j_max, j_alpha).mean()
         out_loss[2] = hinge_loss(jabqmsh[..., 4], m_min, m_max, m_alpha).mean()
         out_loss[3] = hinge_loss(

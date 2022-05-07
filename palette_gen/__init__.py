@@ -41,23 +41,15 @@ def main() -> None:
     sub_palette.set_defaults(cmd=gen_palette_cmd)
 
     # scheme generation
-    sub_scheme = sub.add_parser(
-        "scheme", help="create a colorscheme from a template"
-    )
-    sub_scheme.add_argument(
-        "spec", help="scheme spec config file, yaml", type=str
-    )
+    sub_scheme = sub.add_parser("scheme", help="create a colorscheme from a template")
+    sub_scheme.add_argument("spec", help="scheme spec config file, yaml", type=str)
     sub_scheme.add_argument(
         "palette", help="generated palette scheme file, yaml", type=str
     )
     sub_scheme.set_defaults(cmd=JBScheme.process_config)
 
-    sub_theme = sub.add_parser(
-        "theme", help="create a .theme.json from a template"
-    )
-    sub_theme.add_argument(
-        "spec", help="theme spec config file, yaml", type=str
-    )
+    sub_theme = sub.add_parser("theme", help="create a .theme.json from a template")
+    sub_theme.add_argument("spec", help="theme spec config file, yaml", type=str)
     sub_theme.add_argument(
         "palette", help="generated palette scheme file, yaml", type=str
     )

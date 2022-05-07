@@ -3,7 +3,7 @@ from typing import Iterable, Type
 
 from matplotlib.colors import to_rgb
 
-from palette_gen.solvers import JabColor, RGBColor, T, ViewingSpec
+from palette_gen.solvers import JabColor, T, ViewingSpec
 from palette_gen.solvers.color import ColorSolver
 
 
@@ -15,12 +15,12 @@ class FixedRGBSolver(ColorSolver):
 
     fixed_dict: dict[str, str]
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.fixed_dict.pop("name", None)
 
-    def _solve_colors(self, bg_hex: str, vs: ViewingSpec) -> Iterable[RGBColor]:
-        for name, hex in self.fixed_dict.items():
-            out = JabColor(rgb=to_rgb(hex), vs=vs)
+    def _solve_colors(self, bg_hex: str, vs: ViewingSpec) -> Iterable[JabColor]:
+        for name, hex_code in self.fixed_dict.items():
+            out = JabColor(rgb=to_rgb(hex_code), vs=vs)
             out.name = name
             yield out
 

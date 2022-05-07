@@ -19,9 +19,7 @@ class HTML:
 
     PARENT = None
 
-    def __init__(
-        self, tag: str = "html", _parent: HTML = None, **attrs: str
-    ) -> None:
+    def __init__(self, tag: str = "html", _parent: HTML = None, **attrs: str) -> None:
 
         self.atts = attrs
         self.tag = tag

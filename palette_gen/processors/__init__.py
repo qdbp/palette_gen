@@ -66,6 +66,4 @@ class ConcretePalette:
         try:
             return RGBColor.from_string(mapped)
         except ValueError as e:
-            raise ValueError(
-                f"{mapped} is not a valid rgb color in this palette."
-            ) from e
+            raise ValueError(f"{mapped} is not a valid rgb color in this palette.") from e

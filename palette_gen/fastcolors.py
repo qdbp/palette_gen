@@ -4,14 +4,14 @@ Fast jit-compiled versions of common color conversion functions suitable for
 use in optimization routines.
 """
 
-from collections import Mapping
 from timeit import Timer
-from typing import Any
+from typing import Any, Mapping
 
 import numpy as np
 from colour import RGB_COLOURSPACES, xyY_to_XYZ
 from colour.models import RGB_COLOURSPACE_sRGB
 from numba import njit
+from numpy.typing import NDArray
 
 sRGB_to_XYZ_d65_mat = RGB_COLOURSPACES["sRGB"].matrix_RGB_to_XYZ
 sRGB_ILL = D65_ILL = RGB_COLOURSPACE_sRGB.whitepoint
@@ -23,17 +23,17 @@ XYZ_D50 = xyY_to_XYZ(xyY_D50)
 # these should be more precise, but they are truncated at this point in
 # the srgb standard
 xyY_D65 = np.array([[0.3127, 0.3290, 1.00]])
-XYZ_D65: np.ndarray = xyY_to_XYZ(xyY_D65)
+XYZ_D65: NDArray[np.float64] = xyY_to_XYZ(xyY_D65)
 
 xyY_E = np.array([[1 / 3, 1 / 3, 1.0]])
 
-_LUV_DVEC: np.ndarray = np.asarray([[1.0, 15.0, 3.0]]).T
-_LUV_49_VEC: np.ndarray = np.asarray([4.0, 9.0])
+_LUV_DVEC: NDArray[np.float64] = np.asarray([[1.0, 15.0, 3.0]]).T
+_LUV_49_VEC: NDArray[np.float64] = np.asarray([4.0, 9.0])
 
 
 # noinspection PyPep8Naming
 @njit
-def cct_to_D_xyY_jit(T: float) -> np.ndarray:
+def cct_to_D_xyY_jit(T: float) -> NDArray[np.float64]:
     """
     Finds CIE D-series illuminant xyY coordinates from temperature.
 
@@ -72,7 +72,7 @@ def cct_to_D_xyY_jit(T: float) -> np.ndarray:
 
 
 @njit
-def hk_f_kaiser(x: np.ndarray, y: np.ndarray) -> np.ndarray:
+def hk_f_kaiser(x: NDArray[np.float64], y: NDArray[np.float64]) -> NDArray[np.float64]:
     # noinspection SpellCheckingInspection
     """
     Calculates the "F" factor by Kaiser from xyY (x, y) coordinates.
@@ -81,17 +81,11 @@ def hk_f_kaiser(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     effect. Journal of the Society for Information Display, 19(10), 658.
     doi:10.1889/jsid19.10.658
     """
-    return (
-        0.256
-        - 0.184 * y
-        - 2.527 * x * y
-        + 4.65 * y * x ** 3
-        + 4.657 * x * y ** 4
-    )
+    return 0.256 - 0.184 * y - 2.527 * x * y + 4.65 * y * x**3 + 4.657 * x * y**4
 
 
 @njit
-def hk_correct_lchab_inplace(lchab: np.ndarray) -> None:
+def hk_correct_lchab_inplace(lchab: NDArray[np.float64]) -> None:
     """
     Corrects L* of a L*a*b* array in-place using the Fairchild (1991) formula.
 
@@ -106,8 +100,8 @@ def hk_correct_lchab_inplace(lchab: np.ndarray) -> None:
 
 # noinspection PyPep8Naming
 @njit
-def xyY_to_XYZ_jit(xyY: np.ndarray) -> np.ndarray:
-    out: np.ndarray = np.zeros_like(xyY)
+def xyY_to_XYZ_jit(xyY: NDArray[np.float64]) -> NDArray[np.float64]:
+    out: NDArray[np.float64] = np.zeros_like(xyY)
     x = xyY[..., 0]
     y = xyY[..., 1]
     Y = xyY[..., 2]
@@ -121,9 +115,9 @@ def xyY_to_XYZ_jit(xyY: np.ndarray) -> np.ndarray:
 # noinspection PyPep8Naming
 @njit
 def XYZ_to_xyY_jit(
-    XYZ: np.ndarray, black_xy: np.ndarray = xyY_D65
-) -> np.ndarray:
-    out: np.ndarray = np.zeros_like(XYZ)
+    XYZ: NDArray[np.float64], black_xy: NDArray[np.float64] = xyY_D65
+) -> NDArray[np.float64]:
+    out: NDArray[np.float64] = np.zeros_like(XYZ)
 
     # keepdims doesn't work
     norm = XYZ.sum(axis=-1).reshape(-1, 1)
@@ -138,20 +132,20 @@ def XYZ_to_xyY_jit(
 # noinspection PyPep8Naming
 @njit
 def XYZ_to_Luv_D65_jit(
-    XYZ: np.ndarray, XYZr: np.ndarray = XYZ_D65
-) -> np.ndarray:
+    XYZ: NDArray[np.float64], XYZr: NDArray[np.float64] = XYZ_D65
+) -> NDArray[np.float64]:
     ε = 0.008856
     κ = 903.3
 
-    out: np.ndarray = np.zeros_like(XYZ)
-    y_r: np.ndarray = XYZ[..., 1] / XYZr[..., 1]
+    out: NDArray[np.float64] = np.zeros_like(XYZ)
+    y_r: NDArray[np.float64] = XYZ[..., 1] / XYZr[..., 1]
     out[..., 0] = np.where(y_r > ε, 116 * y_r ** (1 / 3) - 16, κ * y_r)
 
-    denom: np.ndarray = XYZ @ _LUV_DVEC
-    uvp: np.ndarray = _LUV_49_VEC * XYZ[..., :2] / denom
+    denom: NDArray[np.float64] = XYZ @ _LUV_DVEC
+    uvp: NDArray[np.float64] = _LUV_49_VEC * XYZ[..., :2] / denom
 
-    denom_r: np.ndarray = XYZr @ _LUV_DVEC
-    uvp_r: np.ndarray = _LUV_49_VEC * XYZr[..., :2] / denom_r
+    denom_r: NDArray[np.float64] = XYZr @ _LUV_DVEC
+    uvp_r: NDArray[np.float64] = _LUV_49_VEC * XYZr[..., :2] / denom_r
 
     out[..., 1:] = 13 * out[..., 0:1] * (uvp - uvp_r)
     return out
@@ -159,8 +153,8 @@ def XYZ_to_Luv_D65_jit(
 
 # noinspection PyPep8Naming
 @njit
-def Luv_to_LCHuv_jit(Luv: np.ndarray) -> np.ndarray:
-    out: np.ndarray = np.zeros_like(Luv)
+def Luv_to_LCHuv_jit(Luv: NDArray[np.float64]) -> NDArray[np.float64]:
+    out: NDArray[np.float64] = np.zeros_like(Luv)
     out[..., 0] = Luv[..., 0]
     out[..., 1] = np.sqrt(Luv[..., 1] ** 2 + Luv[..., 2] ** 2)
     out[..., 2] = atan2_360(Luv[..., 2], Luv[..., 1])
@@ -168,7 +162,7 @@ def Luv_to_LCHuv_jit(Luv: np.ndarray) -> np.ndarray:
 
 
 @njit
-def atan2_360(x: np.ndarray, y: np.ndarray) -> np.ndarray:
+def atan2_360(x: NDArray[np.float64], y: NDArray[np.float64]) -> NDArray[np.float64]:
     out = np.arctan2(x, y)
     out *= 180 / np.pi
     np.maximum(out, out - 360 * np.sign(out), out)
@@ -176,25 +170,25 @@ def atan2_360(x: np.ndarray, y: np.ndarray) -> np.ndarray:
 
 
 @njit
-def cos_deg(arr: np.ndarray) -> np.ndarray:
+def cos_deg(arr: NDArray[np.float64]) -> NDArray[np.float64]:
     return np.cos(np.deg2rad(arr))
 
 
 @njit
-def sin_deg(arr: np.ndarray) -> np.ndarray:
+def sin_deg(arr: NDArray[np.float64]) -> NDArray[np.float64]:
     return np.sin(np.deg2rad(arr))
 
 
 # noinspection PyPep8Naming
 @njit
 def XYZ_to_Lab_D65_jit(
-    XYZ: np.ndarray, XYZr: np.ndarray = XYZ_D65
-) -> np.ndarray:
+    XYZ: NDArray[np.float64], XYZr: NDArray[np.float64] = XYZ_D65
+) -> NDArray[np.float64]:
 
     ε = 216 / 24389
     κ = 24389 / 27
 
-    xyz_r: np.ndarray = XYZ / XYZr
+    xyz_r: NDArray[np.float64] = XYZ / XYZr
     f_xyz_r = np.where(xyz_r > ε, xyz_r ** (1 / 3), (κ * xyz_r + 16.0) / 116.0)
 
     out = np.zeros_like(XYZ)
@@ -209,10 +203,8 @@ Lab_to_LCHab_jit = Luv_to_LCHuv_jit
 
 # noinspection PyPep8Naming
 @njit
-def sRGB_to_XYZ_jit(sRGB: np.ndarray) -> np.ndarray:
-    srgb = np.where(
-        sRGB < 0.04045, sRGB / 12.92, ((sRGB + 0.055) / 1.055) ** 2.4
-    )
+def sRGB_to_XYZ_jit(sRGB: NDArray[np.float64]) -> NDArray[np.float64]:
+    srgb = np.where(sRGB < 0.04045, sRGB / 12.92, ((sRGB + 0.055) / 1.055) ** 2.4)
     out = np.zeros_like(srgb)
     # unrolled matmul to avoid unsupported dim expansion for jit
     for i in range(3):
@@ -222,10 +214,10 @@ def sRGB_to_XYZ_jit(sRGB: np.ndarray) -> np.ndarray:
 
 # noinspection PyPep8Naming
 @njit
-def HSV_to_RGB_jit(HSV: np.ndarray) -> np.ndarray:
-    hp: np.ndarray = HSV[..., 0:1] * 6
-    ch: np.ndarray = HSV[..., 1:2] * HSV[..., 2:]
-    x: np.ndarray = ch * (1 - np.abs(hp % 2 - 1))
+def HSV_to_RGB_jit(HSV: NDArray[np.float64]) -> NDArray[np.float64]:
+    hp: NDArray[np.float64] = HSV[..., 0:1] * 6
+    ch: NDArray[np.float64] = HSV[..., 1:2] * HSV[..., 2:]
+    x: NDArray[np.float64] = ch * (1 - np.abs(hp % 2 - 1))
 
     rgb = np.zeros_like(HSV)
 
@@ -235,22 +227,14 @@ def HSV_to_RGB_jit(HSV: np.ndarray) -> np.ndarray:
     hp_le6 = hp <= 6
     hp_gt_1 = 1 < hp
 
-    rgb[..., 0:1] += ch * ((hp_ge0 & hp_le1) | (gp_gt5 & hp_le6)).astype(
-        np.uint8
-    )
-    rgb[..., 0:1] += x * (
-        (hp_gt_1 & (hp <= 2)) | ((4 < hp) & (hp <= 5))
-    ).astype(np.uint8)
+    rgb[..., 0:1] += ch * ((hp_ge0 & hp_le1) | (gp_gt5 & hp_le6)).astype(np.uint8)
+    rgb[..., 0:1] += x * ((hp_gt_1 & (hp <= 2)) | ((4 < hp) & (hp <= 5))).astype(np.uint8)
 
     rgb[..., 1:2] += ch * (hp_gt_1 & (hp <= 3)).astype(np.uint8)
-    rgb[..., 1:2] += x * ((hp_ge0 & hp_le1) | ((3 < hp) & (hp <= 4))).astype(
-        np.uint8
-    )
+    rgb[..., 1:2] += x * ((hp_ge0 & hp_le1) | ((3 < hp) & (hp <= 4))).astype(np.uint8)
 
     rgb[..., 2:] += ch * ((3 < hp) & (hp <= 5)).astype(np.uint8)
-    rgb[..., 2:] += x * (((2 < hp) & (hp <= 3)) | (gp_gt5 & hp_le6)).astype(
-        np.uint8
-    )
+    rgb[..., 2:] += x * (((2 < hp) & (hp <= 3)) | (gp_gt5 & hp_le6)).astype(np.uint8)
 
     rgb += HSV[..., 2:] - ch
     return rgb
@@ -258,7 +242,9 @@ def HSV_to_RGB_jit(HSV: np.ndarray) -> np.ndarray:
 
 # noinspection PyPep8Naming
 @njit
-def dE_2000_jit(Lab1: np.ndarray, Lab2: np.ndarray) -> np.ndarray:
+def dE_2000_jit(
+    Lab1: NDArray[np.float64], Lab2: NDArray[np.float64]
+) -> NDArray[np.float64]:
     L1, a1, b1 = Lab1[..., 0], Lab1[..., 1], Lab1[..., 2]
     L2, a2, b2 = Lab2[..., 0], Lab2[..., 1], Lab2[..., 2]
 
@@ -267,7 +253,7 @@ def dE_2000_jit(Lab1: np.ndarray, Lab2: np.ndarray) -> np.ndarray:
 
     Lbp = 0.5 * (L1 + L2)
     Cb = 0.5 * (C1 + C2)
-    G = 0.5 * (1 - np.sqrt((Cb ** 7) / (Cb ** 7 + 25 ** 7)))
+    G = 0.5 * (1 - np.sqrt((Cb**7) / (Cb**7 + 25**7)))
 
     a1p = a1 * (1 + G)
     a2p = a2 * (1 + G)
@@ -308,7 +294,7 @@ def dE_2000_jit(Lab1: np.ndarray, Lab2: np.ndarray) -> np.ndarray:
     SH = 1 + 0.015 * Cbp * T
 
     Δθ = 30 * np.exp(-(((Hbp - 275) / 25) ** 2))
-    RC = 2 * np.sqrt((Cbp ** 7) / (Cbp ** 7 + 25.0 ** 7))
+    RC = 2 * np.sqrt((Cbp**7) / (Cbp**7 + 25.0**7))
     RT = -RC * sin_deg(2 * Δθ)
     KL = KC = KH = 1
 
@@ -323,7 +309,9 @@ def dE_2000_jit(Lab1: np.ndarray, Lab2: np.ndarray) -> np.ndarray:
 
 # noinspection PyPep8Naming
 @njit
-def dE_2000_sRGB_D65_jit(rgb1: np.ndarray, rgb2: np.ndarray) -> np.ndarray:
+def dE_2000_sRGB_D65_jit(
+    rgb1: NDArray[np.float64], rgb2: NDArray[np.float64]
+) -> NDArray[np.float64]:
     return dE_2000_jit(
         XYZ_to_Lab_D65_jit(sRGB_to_XYZ_jit(rgb1)),
         XYZ_to_Lab_D65_jit(sRGB_to_XYZ_jit(rgb2)),
@@ -334,10 +322,7 @@ def pretty_time(stmt: str, rows: int, glb: Mapping[str, Any]) -> None:
     n, t = Timer(stmt, globals=dict(glb)).autorange()
     if "dE_" in stmt:
         rows -= 1
-    print(
-        f"{stmt}: {t / (n * rows):.3g} "
-        f"seconds per call per color for {rows} rows"
-    )
+    print(f"{stmt}: {t / (n * rows):.3g} " f"seconds per call per color for {rows} rows")
 
 
 # noinspection SpellCheckingInspection,PyUnusedLocal

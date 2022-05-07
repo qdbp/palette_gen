@@ -12,10 +12,8 @@ repos:
   - hooks:
       - id: black
         language_version: python3
-        args:
-          - --line-length=80
     repo: https://github.com/psf/black
-    rev: 20.8b1
+    rev: 22.3.0
   # DOCFORMATTER
   - hooks:
       - id: docformatter
@@ -29,33 +27,23 @@ repos:
   # ISORT
   - hooks:
       - id: isort
-        args:
-          - --profile=black
-          - --line-length=80
     repo: https://github.com/pycqa/isort
-    rev: '5.7.0'
-  # LOCAL HOOKS
-  - repo: local
-    hooks: []
-      # njit is making this very hard to satisfy properly, need to isolate
-      # - id: mypy
-      #   name: mypy
-      #   language: system
-      #   entry: .venv/bin/mypy
-      #   args:
-      #     - --config-file=mypy.ini
-      #   exclude: tests
-      #   types:
-      #     - python
-      # pytest
-      # slows us down for no reason now that we are done implementing
-      # the fastcolors functions
-      # - id: pytest
-      #   name: pytest
-      #   language: system
-      #   entry: /usr/bin/pytest
-      #   args:
-      #     - tests
-      #   pass_filenames: false
-      #   types:
-      #     - python
+    rev: '5.10.1'
+  - hooks:
+    - id: mypy
+      name: mypy
+      entry: .venv/bin/mypy
+      language: system
+      always_run: true
+      files: '\.py$'
+      args:
+      - --config-file=mypy.ini
+      - palette_gen
+      pass_filenames: false
+    - id: pytest
+      name: pytest
+      entry: .venv/bin/pytest
+      language: system
+      always_run: true
+      pass_filenames: false
+    repo: local

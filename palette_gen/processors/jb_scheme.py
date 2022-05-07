@@ -8,9 +8,7 @@ from argparse import Namespace
 from dataclasses import dataclass, field, fields
 from datetime import datetime
 from functools import partial
-from typing import Any, Callable, Iterable
-from typing import Optional as Opt
-from typing import Type, Union
+from typing import Any, Callable, Iterable, Type
 from xml.dom import minidom
 
 # noinspection PyPep8Naming
@@ -25,7 +23,7 @@ def strip_hex(s: str) -> str:
     return s.lstrip("#")
 
 
-def jb_hex(s: Union[str, int]) -> str:
+def jb_hex(s: str | int) -> str:
     if isinstance(s, int):
         s = f"{s:06d}"
     s = strip_hex(s)
@@ -51,9 +49,7 @@ class XMLAccessorDescriptor:
         self.push = push
         self.empty = empty
 
-    def __get__(
-        self, instance: XMLBuilder, owner: Type[XMLBuilder]
-    ) -> XMLAccessor:
+    def __get__(self, instance: XMLBuilder, owner: Type[XMLBuilder]) -> XMLAccessor:
         if self.empty and self.push:
             return XMLAccessor(instance.push_empty)
         elif self.empty:
@@ -71,11 +67,11 @@ class XMLBuilder(XMLAccessor):
 
     def __init__(self, root: Element):
         self.parent_stack = [root]
-        self._staged: Opt[Element] = None
+        self._staged: Element | None = None
         XMLAccessor.__init__(self, self.elem)
 
     @classmethod
-    def mk_root(cls, name: str, text: Opt[str], /, **attrs: str) -> XMLBuilder:
+    def mk_root(cls, name: str, text: str | None, /, **attrs: str) -> XMLBuilder:
         root = Element(name, {**attrs})
         if text is not None:
             root.text = text
@@ -95,9 +91,7 @@ class XMLBuilder(XMLAccessor):
 
     def __call__(self, next_parent: Element) -> XMLBuilder:
         if self._staged is not None:
-            raise RuntimeError(
-                "Staged parent twice without entering context..."
-            )
+            raise RuntimeError("Staged parent twice without entering context...")
         self._staged = next_parent
         return self
 
@@ -112,9 +106,7 @@ class XMLBuilder(XMLAccessor):
     def append(self, node: Element) -> None:
         self.top().append(node)
 
-    def elem(
-        self, name: str, text: Opt[str] = None, /, **attrs: str
-    ) -> XMLBuilder:
+    def elem(self, name: str, text: str | None = None, /, **attrs: str) -> XMLBuilder:
         elem = SubElement(self.top(), name, {**attrs})
         if text is not None:
             elem.text = text
@@ -124,7 +116,7 @@ class XMLBuilder(XMLAccessor):
     def empty(self, name: str, /, **attrs: str) -> XMLBuilder:
         return self.elem(name, None, **attrs)
 
-    def push(self, name: str, text: Opt[str], **attrs: str) -> XMLBuilder:
+    def push(self, name: str, text: str | None, **attrs: str) -> XMLBuilder:
         self.elem(name, text, **attrs)
         self.parent_stack.append(self.last())
         self._staged = self.last()
@@ -148,13 +140,13 @@ COLOR_KEYS = {"fg", "bg", "effect_color", "stripe"}
 class JBAttrSpec(XMLSerializable):
     name: str
 
-    fg: Opt[str] = None  # rgb hex
-    bg: Opt[str] = None  # rgb hex
-    ft: Opt[str] = None
-    effect: Opt[str] = None
-    effect_color: Opt[str] = None  # rgb hex
-    stripe: Opt[str] = None  # rgb hex
-    base: Opt[str] = None
+    fg: str | None = None  # rgb hex
+    bg: str | None = None  # rgb hex
+    ft: str | None = None
+    effect: str | None = None
+    effect_color: str | None = None  # rgb hex
+    stripe: str | None = None  # rgb hex
+    base: str | None = None
 
     def to_xml(self) -> Element:
 
@@ -172,15 +164,11 @@ class JBAttrSpec(XMLSerializable):
             if self.ft is not None:
                 xmlb.e.option(name="FONT_TYPE", value=self.ft)
             if self.stripe is not None:
-                xmlb.e.option(
-                    name="ERROR_STRIPE_COLOR", value=jb_hex(self.stripe)
-                )
+                xmlb.e.option(name="ERROR_STRIPE_COLOR", value=jb_hex(self.stripe))
             if self.effect is not None:
                 xmlb.e.option(name="EFFECT_TYPE", value=self.effect)
             if self.effect_color is not None:
-                xmlb.e.option(
-                    name="EFFECT_COLOR", value=jb_hex(self.effect_color)
-                )
+                xmlb.e.option(name="EFFECT_COLOR", value=jb_hex(self.effect_color))
 
         return xmlb.root()
 
@@ -188,7 +176,7 @@ class JBAttrSpec(XMLSerializable):
 @dataclass(frozen=True)
 class JBAtomicOption(XMLSerializable):
     name: str
-    value: Union[str, int, float, bool]
+    value: str | int | float | bool
 
     def to_xml(self) -> Element:
         value = str(self.value)
@@ -221,9 +209,7 @@ class JBFontSpec:
     console_line_spacing: float = 0.8
 
     def to_options(self) -> Iterable[JBAtomicOption]:
-        yield from (
-            JBAtomicOption(f.name, getattr(self, f.name)) for f in fields(self)
-        )
+        yield from (JBAtomicOption(f.name, getattr(self, f.name)) for f in fields(self))
 
 
 @dataclass()
@@ -297,10 +283,7 @@ class JBScheme(XMLSerializable):
         ]
 
         jb_scheme = JBScheme(
-            color_spec=color_spec,
-            attrs=attrs,
-            font_spec=font,
-            **scheme["meta"],
+            color_spec=color_spec, attrs=attrs, font_spec=font, **scheme["meta"]
         )
 
         root = jb_scheme.to_xml()

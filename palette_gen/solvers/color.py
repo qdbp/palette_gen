@@ -1,15 +1,18 @@
 from abc import ABC, abstractmethod
 from math import atan2
-from typing import Any, Iterable, Type, Union, final
+from typing import Any, Iterable, Type, final
 
 import numpy as np
 from numba import njit
+from numpy.typing import NDArray
 from scipy.optimize import minimize
 from scipy.special import expit
 
-from palette_gen.fastcolors import sRGB_to_XYZ_jit
-from palette_gen.punishedcam import XYZ_to_PUNISHEDCAM_JabQMsh_jit
-from palette_gen.solvers import JabColor, RGBColor, T, ViewingSpec
+from palette_gen.fastcolors import sRGB_to_XYZ_jit  # type: ignore
+from palette_gen.punishedcam import XYZ_to_PUNISHEDCAM_JabQMsh_jit  # type: ignore
+from palette_gen.solvers import JabColor, T, ViewingSpec
+
+OrganizedColors = list[JabColor] | dict[str, list[JabColor]]
 
 
 class ColorSolver(ABC):
@@ -19,16 +22,14 @@ class ColorSolver(ABC):
     """
 
     @final
-    def solve_for_context(
-        self, bg_hex: str, vs: ViewingSpec
-    ) -> Union[list[RGBColor], dict[str, list[RGBColor]]]:
+    def solve_for_context(self, bg_hex: str, vs: ViewingSpec) -> OrganizedColors:
         """
         Solves for a set of colors based on a viewing spec.
         """
         return self.organize_colors(self._solve_colors(bg_hex, vs))
 
     @abstractmethod
-    def _solve_colors(self, bg_hex: str, vs: ViewingSpec) -> Iterable[RGBColor]:
+    def _solve_colors(self, bg_hex: str, vs: ViewingSpec) -> Iterable[JabColor]:
         """
         Implementation of solve_for_context.
 
@@ -42,9 +43,7 @@ class ColorSolver(ABC):
         """
         return cls(**conf)  # type: ignore
 
-    def organize_colors(
-        self, raw_colors: Iterable[RGBColor]
-    ) -> Union[list[RGBColor], dict[str, list[RGBColor]]]:
+    def organize_colors(self, raw_colors: Iterable[JabColor]) -> OrganizedColors:
         """
         Groups, sorts and labels the colors returned by _solve.
 
@@ -63,7 +62,7 @@ class ColorSolver(ABC):
         return self.hue_sort(raw_colors)
 
     @staticmethod
-    def hue_sort(colors: Iterable[RGBColor]) -> list[RGBColor]:
+    def hue_sort(colors: Iterable[JabColor]) -> list[JabColor]:
         return sorted(colors, key=lambda c: -atan2(c.jab[1], c.jab[2]))
 
 
@@ -73,7 +72,7 @@ class FixedJabTargetSolver(ColorSolver, ABC):
     """
 
     @abstractmethod
-    def jab_target(self, ab_offset: np.ndarray) -> np.ndarray:
+    def jab_target(self, ab_offset: NDArray[np.float64]) -> NDArray[np.float64]:
         """
         Gets the jab targets corresponding to the ring positions.
 
@@ -89,7 +88,7 @@ class FixedJabTargetSolver(ColorSolver, ABC):
         """
 
     @final
-    def _solve_colors(self, bg_hex: str, vs: ViewingSpec) -> Iterable[RGBColor]:
+    def _solve_colors(self, bg_hex: str, vs: ViewingSpec) -> Iterable[JabColor]:
 
         # TODO this simplistic adjustment distorts low-lightness colors too much
         #  need a better approach
@@ -111,17 +110,11 @@ class FixedJabTargetSolver(ColorSolver, ABC):
         res = minimize(
             self._loss,
             logit_rgb,
-            args=(
-                jab_target,
-                vs.XYZw,
-                vs.Lsw,
-                vs.Lb,
-                vs.Lmax,
-            ),
+            args=(jab_target, vs.XYZw, vs.Lsw, vs.Lb, vs.Lmax),
         )
 
         return map(
-            lambda x: JabColor(rgb=tuple(x), vs=vs),
+            lambda x: JabColor(rgb=tuple(x), vs=vs),  # type: ignore
             expit(res["x"]).reshape((-1, 3)),
         )
 
@@ -130,9 +123,9 @@ class FixedJabTargetSolver(ColorSolver, ABC):
     @final
     @njit  # type: ignore
     def _loss(
-        logit_rgb: np.ndarray,
-        jab_target: np.ndarray,
-        xyz_r: np.ndarray,
+        logit_rgb: NDArray[np.float64],
+        jab_target: NDArray[np.float64],
+        xyz_r: NDArray[np.float64],
         Lsw: float,
         Lb: float,
         Lmax: float,

@@ -148,6 +148,13 @@ class JBAttrSpec(XMLSerializable):
     stripe: str | None = None  # rgb hex
     base: str | None = None
 
+    @property
+    def have_any_value(self) -> bool:
+        for field in ["fg", "bg", "ft", "effect", "effect_color", "stripe"]:
+            if getattr(self, field, None) is not None:
+                return True
+        return False
+
     def to_xml(self) -> Element:
 
         root_attrs = dict(name=self.name.upper())
@@ -156,19 +163,20 @@ class JBAttrSpec(XMLSerializable):
 
         xmlb = XMLBuilder.mk_root("option", None, **root_attrs)
 
-        with xmlb.ep.value():
-            if self.fg is not None:
-                xmlb.e.option(name="FOREGROUND", value=jb_hex(self.fg))
-            if self.bg is not None:
-                xmlb.e.option(name="BACKGROUND", value=jb_hex(self.bg))
-            if self.ft is not None:
-                xmlb.e.option(name="FONT_TYPE", value=self.ft)
-            if self.stripe is not None:
-                xmlb.e.option(name="ERROR_STRIPE_COLOR", value=jb_hex(self.stripe))
-            if self.effect is not None:
-                xmlb.e.option(name="EFFECT_TYPE", value=self.effect)
-            if self.effect_color is not None:
-                xmlb.e.option(name="EFFECT_COLOR", value=jb_hex(self.effect_color))
+        if self.have_any_value:
+            with xmlb.ep.value():
+                if self.fg is not None:
+                    xmlb.e.option(name="FOREGROUND", value=jb_hex(self.fg))
+                if self.bg is not None:
+                    xmlb.e.option(name="BACKGROUND", value=jb_hex(self.bg))
+                if self.ft is not None:
+                    xmlb.e.option(name="FONT_TYPE", value=self.ft)
+                if self.stripe is not None:
+                    xmlb.e.option(name="ERROR_STRIPE_COLOR", value=jb_hex(self.stripe))
+                if self.effect is not None:
+                    xmlb.e.option(name="EFFECT_TYPE", value=self.effect)
+                if self.effect_color is not None:
+                    xmlb.e.option(name="EFFECT_COLOR", value=jb_hex(self.effect_color))
 
         return xmlb.root()
 

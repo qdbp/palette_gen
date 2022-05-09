@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from logging import warning
-from typing import Any, Mapping, Union
+from typing import Any, Mapping
 
 # TODO use color class instead of str for hex colors
 from palette_gen.solvers import RGBColor
@@ -27,7 +27,7 @@ class ConcretePalette:
                 hex_map[name] = item["hex"]
         return ConcretePalette(**palette_dict, hex_map=hex_map)
 
-    def subs(self, color: Union[int, str]) -> RGBColor:
+    def subs(self, color: int | str) -> RGBColor:
         """
         Translates a color "in the wild" into a hex color based on this
         palette.

@@ -1,11 +1,38 @@
 [tool.black]
-line-length = 90
+target-version = ['py311']
+line-length = 105
 
-[tool.isort]
-profile = "black"
-multi_line_output = 3
-line_length = 90
+[tool.mypy]
+python_version = 3.11
+ignore_missing_imports = true
+follow_imports = "silent"
 
-[tool.pytest.ini_options]
-addopts = "-ra -q"
-testpaths = ["tests"]
+allow_any_generics = true
+allow_untyped_calls = true
+implicit_optional = true
+check_untyped_defs = true
+allow_redefinition = true
+
+[tool.ruff]
+line-length = 105
+target-version = 'py311'
+select = ["B", "E", "C4", "DTZ", "ERA", "F", "ISC", "PD", "PIE", "PLE", "PTH", "PLR", "PLW", "Q", "RSE", "SIM", "T20", "UP", "W"]
+ignore = [
+    "B905",
+    "E402",
+    "E731",
+    "E741",
+    "PD002",
+    "PD011",
+    "PD901",
+    "PLR0911",
+    "PLR0912",
+    "PLR0913",
+    "PLR0915",
+    "PLR2004",
+    "PLW2901",
+    "SIM108",
+    "T201",
+]
+
+

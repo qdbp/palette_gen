@@ -5,7 +5,8 @@ use in optimization routines.
 """
 
 from timeit import Timer
-from typing import Any, Mapping
+from typing import Any
+from collections.abc import Mapping
 
 import numpy as np
 from colour import RGB_COLOURSPACES, xyY_to_XYZ
@@ -58,7 +59,7 @@ def cct_to_D_xyY_jit(T: float) -> NDArray[np.float64]:
     elif 7000 < T <= 25000:
         x = -2.0064 * ttt + 1.9018 * tt + 0.24748 * t + 0.237040
     else:
-        print(f"Invalid temperature", T, "in CCT conversion.")
+        print("Invalid temperature", T, "in CCT conversion.")
         # this will break any consuming code in (hopefully) obvious ways
         out[...] = np.nan
         return out
@@ -184,7 +185,6 @@ def sin_deg(arr: NDArray[np.float64]) -> NDArray[np.float64]:
 def XYZ_to_Lab_D65_jit(
     XYZ: NDArray[np.float64], XYZr: NDArray[np.float64] = XYZ_D65
 ) -> NDArray[np.float64]:
-
     ε = 216 / 24389
     κ = 24389 / 27
 
@@ -221,20 +221,20 @@ def HSV_to_RGB_jit(HSV: NDArray[np.float64]) -> NDArray[np.float64]:
 
     rgb = np.zeros_like(HSV)
 
-    hp_ge0 = 0 <= hp
+    hp_ge0 = hp >= 0
     hp_le1 = hp <= 1
-    gp_gt5 = 5 < hp
+    gp_gt5 = hp > 5
     hp_le6 = hp <= 6
-    hp_gt_1 = 1 < hp
+    hp_gt_1 = hp > 1
 
     rgb[..., 0:1] += ch * ((hp_ge0 & hp_le1) | (gp_gt5 & hp_le6)).astype(np.uint8)
-    rgb[..., 0:1] += x * ((hp_gt_1 & (hp <= 2)) | ((4 < hp) & (hp <= 5))).astype(np.uint8)
+    rgb[..., 0:1] += x * ((hp_gt_1 & (hp <= 2)) | ((hp > 4) & (hp <= 5))).astype(np.uint8)
 
     rgb[..., 1:2] += ch * (hp_gt_1 & (hp <= 3)).astype(np.uint8)
-    rgb[..., 1:2] += x * ((hp_ge0 & hp_le1) | ((3 < hp) & (hp <= 4))).astype(np.uint8)
+    rgb[..., 1:2] += x * ((hp_ge0 & hp_le1) | ((hp > 3) & (hp <= 4))).astype(np.uint8)
 
-    rgb[..., 2:] += ch * ((3 < hp) & (hp <= 5)).astype(np.uint8)
-    rgb[..., 2:] += x * (((2 < hp) & (hp <= 3)) | (gp_gt5 & hp_le6)).astype(np.uint8)
+    rgb[..., 2:] += ch * ((hp > 3) & (hp <= 5)).astype(np.uint8)
+    rgb[..., 2:] += x * (((hp > 2) & (hp <= 3)) | (gp_gt5 & hp_le6)).astype(np.uint8)
 
     rgb += HSV[..., 2:] - ch
     return rgb
@@ -242,9 +242,7 @@ def HSV_to_RGB_jit(HSV: NDArray[np.float64]) -> NDArray[np.float64]:
 
 # noinspection PyPep8Naming
 @njit
-def dE_2000_jit(
-    Lab1: NDArray[np.float64], Lab2: NDArray[np.float64]
-) -> NDArray[np.float64]:
+def dE_2000_jit(Lab1: NDArray[np.float64], Lab2: NDArray[np.float64]) -> NDArray[np.float64]:
     L1, a1, b1 = Lab1[..., 0], Lab1[..., 1], Lab1[..., 2]
     L2, a2, b2 = Lab2[..., 0], Lab2[..., 1], Lab2[..., 2]
 
@@ -309,9 +307,7 @@ def dE_2000_jit(
 
 # noinspection PyPep8Naming
 @njit
-def dE_2000_sRGB_D65_jit(
-    rgb1: NDArray[np.float64], rgb2: NDArray[np.float64]
-) -> NDArray[np.float64]:
+def dE_2000_sRGB_D65_jit(rgb1: NDArray[np.float64], rgb2: NDArray[np.float64]) -> NDArray[np.float64]:
     return dE_2000_jit(
         XYZ_to_Lab_D65_jit(sRGB_to_XYZ_jit(rgb1)),
         XYZ_to_Lab_D65_jit(sRGB_to_XYZ_jit(rgb2)),
@@ -322,22 +318,21 @@ def pretty_time(stmt: str, rows: int, glb: Mapping[str, Any]) -> None:
     n, t = Timer(stmt, globals=dict(glb)).autorange()
     if "dE_" in stmt:
         rows -= 1
-    print(f"{stmt}: {t / (n * rows):.3g} " f"seconds per call per color for {rows} rows")
+    print(f"{stmt}: {t / (n * rows):.3g} seconds per call per color for {rows} rows")
 
 
 # noinspection SpellCheckingInspection,PyUnusedLocal
 def bench_funcs(size: int = 1000) -> None:
-
     hsv = globals()["__colmat_hsv"] = np.random.random(size=(size, 3))
 
     # ground truths
     rgb = globals()["__colmat_rgb"] = HSV_to_RGB_jit(hsv)
     xyz = globals()["__colmat_xyz"] = sRGB_to_XYZ_jit(rgb)
-    xyy = globals()["__colmat_xyy"] = XYZ_to_xyY_jit(xyz)
+    globals()["__colmat_xyy"] = XYZ_to_xyY_jit(xyz)
     luv = globals()["__colmat_luv"] = XYZ_to_Luv_D65_jit(xyz)
-    lchuv = globals()["__colmat_lchuv"] = Luv_to_LCHuv_jit(luv)
+    globals()["__colmat_lchuv"] = Luv_to_LCHuv_jit(luv)
     lab = globals()["__colmat_lab"] = XYZ_to_Lab_D65_jit(xyz)
-    lchab = globals()["__colmat_lchab"] = Lab_to_LCHab_jit(lab)
+    globals()["__colmat_lchab"] = Lab_to_LCHab_jit(lab)
 
     dE_2000_jit(lab[:2], lab[1:3])
 

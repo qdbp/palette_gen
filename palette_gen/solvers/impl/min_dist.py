@@ -1,5 +1,6 @@
 from dataclasses import astuple, dataclass
-from typing import Any, Iterable, Type
+from typing import Any
+from collections.abc import Iterable
 
 import numpy as np
 from matplotlib.colors import to_rgb
@@ -26,9 +27,7 @@ class HingeSpec:
 
 
 @njit  # type: ignore
-def hinge_loss(
-    arr: NDArray[np.float64], lb: float, ub: float, α: float
-) -> NDArray[np.float64]:
+def hinge_loss(arr: NDArray[np.float64], lb: float, ub: float, α: float) -> NDArray[np.float64]:
     flat_arr = arr.ravel()
     out = np.zeros_like(flat_arr)
 
@@ -61,7 +60,6 @@ class HingeMinDistSolver(ColorSolver):
     seed: int | None = None
 
     def _solve_colors(self, bg_rgb: str, vs: ViewingSpec) -> Iterable[JabColor]:
-
         print(f"Palette {self.name}...")
 
         if self.seed is not None:
@@ -99,15 +97,14 @@ class HingeMinDistSolver(ColorSolver):
         )
 
         loss_names = ["min(d)", "J", "M", "ΔE", "Δh"]
-        print(f"loss: ", end="")
+        print("loss: ", end="")
         for name, val in zip(loss_names, out_loss):
             print(f"{name}={val:.3f}; ", end="")
         print("")
 
         # noinspection PyTypeChecker
         return sorted(
-            JabColor(rgb=tuple(expit(rgb)), vs=vs)  # type: ignore
-            for rgb in res["x"].reshape((-1, 3))
+            JabColor(rgb=tuple(expit(rgb)), vs=vs) for rgb in res["x"].reshape((-1, 3))  # type: ignore
         )
 
     @staticmethod
@@ -134,18 +131,13 @@ class HingeMinDistSolver(ColorSolver):
         hg_max: float,
         hg_alpha: float,
     ) -> float:
-
         rgb = (1 / (1 + np.exp(-logit_rgb))).reshape((-1, 3))
         n_colors = len(rgb)
 
-        jabqmsh = XYZ_to_PUNISHEDCAM_JabQMsh_jit(
-            sRGB_to_XYZ_jit(rgb), xyz_r, Lsw=Lsw, Lb=Lb, Lmax=Lmax
-        )
+        jabqmsh = XYZ_to_PUNISHEDCAM_JabQMsh_jit(sRGB_to_XYZ_jit(rgb), xyz_r, Lsw=Lsw, Lb=Lb, Lmax=Lmax)
         out_jab[:] = jabqmsh[..., :3]
 
-        pairwise_de = de_punished_jab(
-            jabqmsh.reshape((-1, 1, 7)), jabqmsh.reshape((1, -1, 7))
-        )
+        pairwise_de = de_punished_jab(jabqmsh.reshape((-1, 1, 7)), jabqmsh.reshape((1, -1, 7)))
         pairwise_de += np.diag(np.ones(n_colors))  # type: ignore
 
         # calculate hue gaps
@@ -177,5 +169,5 @@ class HingeMinDistSolver(ColorSolver):
         return out_loss.sum()  # type: ignore
 
     @classmethod
-    def construct_from_config(cls: Type[T], config: dict[str, Any]) -> T:
-        raise NotImplementedError()
+    def construct_from_config(cls: type[T], config: dict[str, Any]) -> T:
+        raise NotImplementedError

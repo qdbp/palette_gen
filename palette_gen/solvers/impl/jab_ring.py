@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Type
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
@@ -61,5 +61,5 @@ class JabRingSpec(FixedJabTargetSolver):
         return out
 
     @classmethod
-    def construct_from_config(cls: Type[T], conf: dict[str, Any]) -> T:
+    def construct_from_config(cls: type[T], conf: dict[str, Any]) -> T:
         return cls(**conf)  # type: ignore

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Iterable, Type
+from collections.abc import Iterable
 
 from matplotlib.colors import to_rgb
 
@@ -25,5 +25,5 @@ class FixedRGBSolver(ColorSolver):
             yield out
 
     @classmethod
-    def construct_from_config(cls: Type[T], conf: dict[str, str]) -> T:
+    def construct_from_config(cls: type[T], conf: dict[str, str]) -> T:
         return cls(fixed_dict=conf)  # type: ignore

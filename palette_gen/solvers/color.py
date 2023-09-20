@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from math import atan2
-from typing import Any, Iterable, Type, final
+from typing import Any, final
+from collections.abc import Iterable
 
 import numpy as np
 from numba import njit
@@ -37,7 +38,7 @@ class ColorSolver(ABC):
         """
 
     @classmethod
-    def construct_from_config(cls: Type[T], conf: dict[str, Any]) -> T:
+    def construct_from_config(cls: type[T], conf: dict[str, Any]) -> T:
         """
         Constructs the spec from the yaml configuration.
         """
@@ -89,16 +90,13 @@ class FixedJabTargetSolver(ColorSolver, ABC):
 
     @final
     def _solve_colors(self, bg_hex: str, vs: ViewingSpec) -> Iterable[JabColor]:
-
         # TODO this simplistic adjustment distorts low-lightness colors too much
         #  need a better approach
-        # ab_offset = vs.rgb_to_cam(np.array(to_rgb(bg_hex))[None, :])[1:3]
         jab_target = self.jab_target(np.zeros(2))
 
         if jab_target.ndim != 2 or jab_target.shape[1] != 3:
             raise RuntimeError(
-                f"jab_target has unsuitable shape {jab_target.shape}; "
-                f"should be (n_colors, 3)"
+                f"jab_target has unsuitable shape {jab_target.shape}; should be (n_colors, 3)"
             )
 
         # initial logit values
@@ -113,10 +111,7 @@ class FixedJabTargetSolver(ColorSolver, ABC):
             args=(jab_target, vs.XYZw, vs.Lsw, vs.Lb, vs.Lmax),
         )
 
-        return map(
-            lambda x: JabColor(rgb=tuple(x), vs=vs),  # type: ignore
-            expit(res["x"]).reshape((-1, 3)),
-        )
+        return (JabColor(rgb=tuple(x), vs=vs) for x in expit(res["x"]).reshape((-1, 3)))
 
     # noinspection PyPep8Naming
     @staticmethod
@@ -130,12 +125,9 @@ class FixedJabTargetSolver(ColorSolver, ABC):
         Lb: float,
         Lmax: float,
     ) -> float:
-
         rgb = (1 / (1 + np.exp(-logit_rgb))).reshape((-1, 3))
 
-        jabqmsh = XYZ_to_PUNISHEDCAM_JabQMsh_jit(
-            sRGB_to_XYZ_jit(rgb), xyz_r, Lsw=Lsw, Lb=Lb, Lmax=Lmax
-        )
+        jabqmsh = XYZ_to_PUNISHEDCAM_JabQMsh_jit(sRGB_to_XYZ_jit(rgb), xyz_r, Lsw=Lsw, Lb=Lb, Lmax=Lmax)
         jab = jabqmsh[..., :3]
         loss = ((jab - jab_target) ** 2).sum()
         return loss  # type: ignore

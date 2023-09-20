@@ -3,12 +3,15 @@ Declarative Jetbrains Color Scheme Generator.
 """
 from __future__ import annotations
 
+import logging
 from abc import abstractmethod
 from argparse import Namespace
 from dataclasses import dataclass, field, fields
 from datetime import datetime
 from functools import partial
-from typing import Any, Callable, Iterable, Type
+from pathlib import Path
+from typing import Any
+from collections.abc import Callable, Iterable
 from xml.dom import minidom
 
 # noinspection PyPep8Naming
@@ -49,7 +52,7 @@ class XMLAccessorDescriptor:
         self.push = push
         self.empty = empty
 
-    def __get__(self, instance: XMLBuilder, owner: Type[XMLBuilder]) -> XMLAccessor:
+    def __get__(self, instance: XMLBuilder, owner: type[XMLBuilder]) -> XMLAccessor:
         if self.empty and self.push:
             return XMLAccessor(instance.push_empty)
         elif self.empty:
@@ -148,16 +151,22 @@ class JBAttrSpec(XMLSerializable):
     stripe: str | None = None  # rgb hex
     base: str | None = None
 
+    _keep_case: bool | None = None  # for dealing with case sensitive keys
+
+    def __post_init__(self) -> None:
+        # by default, assume case is important if the yaml is not all lowercase
+        if self._keep_case is None:
+            self._keep_case = self.name != self.name.lower()
+
     @property
     def have_any_value(self) -> bool:
-        for field in ["fg", "bg", "ft", "effect", "effect_color", "stripe"]:
-            if getattr(self, field, None) is not None:
+        for fld in ["fg", "bg", "ft", "effect", "effect_color", "stripe"]:
+            if getattr(self, fld, None) is not None:
                 return True
         return False
 
     def to_xml(self) -> Element:
-
-        root_attrs = dict(name=self.name.upper())
+        root_attrs = {"name": self.name.upper() if not self._keep_case else self.name}
         if self.base is not None:
             root_attrs["baseAttributes"] = self.base.upper()
 
@@ -264,43 +273,32 @@ class JBScheme(XMLSerializable):
 
     @classmethod
     def process_config(cls, args: Namespace) -> None:
-
-        with open(args.spec, "r") as f:
-            scheme = yaml.full_load(f)
-
+        scheme = yaml.full_load(Path(args.spec).read_text())
         font = JBFontSpec(**scheme["font"])
-
-        with open(args.palette, "r") as f:
-            palette = ConcretePalette.from_config(yaml.full_load(f))
+        palette = ConcretePalette.from_config(yaml.full_load(Path(args.palette).read_text()))
 
         print(f"Generating scheme for {palette.name}, view {palette.view}")
 
         color_spec = JBColorSpec(
-            JBAtomicOption(key, palette.subs(val).bare_hex)
-            for key, val in scheme["colors"].items()
+            JBAtomicOption(key, palette.subs(val).bare_hex) for key, val in scheme["colors"].items()
         )
         attrs = [
             JBAttrSpec(
                 name=key,
-                **{
-                    k: palette.subs(v).bare_hex if k in COLOR_KEYS else str(v)
-                    for k, v in val.items()
-                },
+                **{k: palette.subs(v).bare_hex if k in COLOR_KEYS else str(v) for k, v in val.items()},
             )
             for key, val in scheme["attributes"].items()
         ]
 
-        jb_scheme = JBScheme(
-            color_spec=color_spec, attrs=attrs, font_spec=font, **scheme["meta"]
-        )
+        jb_scheme = JBScheme(color_spec=color_spec, attrs=attrs, font_spec=font, **scheme["meta"])
 
         root = jb_scheme.to_xml()
         dom: str = minidom.parseString(tostring(root)).toprettyxml(indent="  ")
         dom = dom[dom.index("\n") + 1 :]
 
-        if (out_fn := getattr(args, "out")) is None:
+        if (out_fn := args.out) is None:
             out_fn = jb_scheme.name + f"{palette.view}.xml"
 
-        print(f"Writing generated scheme {out_fn}")
-        with open(out_fn, "w") as f:
-            f.write(dom)
+        out_path = Path(out_fn)
+        logging.info(f"Writing generated scheme {out_fn}")
+        out_path.write_text(dom)

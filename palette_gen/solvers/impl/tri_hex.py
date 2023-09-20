@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Iterable
+from collections.abc import Iterable
 
 import numpy as np
 from numpy.typing import NDArray
@@ -47,15 +47,12 @@ class TriHexSolver(FixedJabTargetSolver):
         """
 
         out = np.empty((6, 2))
-        xs: NDArray[np.float64] = (
-            np.linspace(0, 2 * np.pi, num=6, endpoint=False) + offset * np.pi / 3
-        )
+        xs: NDArray[np.float64] = np.linspace(0, 2 * np.pi, num=6, endpoint=False) + offset * np.pi / 3
         out[:, 0] = np.cos(xs)
         out[:, 1] = np.sin(xs)
         return out
 
     def jab_target(self, ab_offset: NDArray[np.float64]) -> NDArray[np.float64]:
-
         # array layout:
         # 0:6 first ring primaries
         # 6:12 second ring primaries
@@ -73,9 +70,7 @@ class TriHexSolver(FixedJabTargetSolver):
             * (2 / np.sqrt(3))  # distance from zero to the second gap
             * self.unit_hex(self.first_ring_offset + 0.5)
         )
-        out[12:18, 1:] = (
-            self.pitch * (1 + 1 / np.sqrt(3)) * self.unit_hex(self.first_ring_offset)
-        )
+        out[12:18, 1:] = self.pitch * (1 + 1 / np.sqrt(3)) * self.unit_hex(self.first_ring_offset)
         out[18:24, 1:] = self.pitch * self.unit_hex(self.first_ring_offset + 0.5)
 
         # h as defined in the notebook
@@ -91,13 +86,11 @@ class TriHexSolver(FixedJabTargetSolver):
         return out
 
     def organize_colors(self, raw_colors: Iterable[JabColor]) -> OrganizedColors:
-
         raw_colors = list(raw_colors)
         out = {
             self.ring0_name or self.name + "r0": ColorSolver.hue_sort(raw_colors[0:6]),
             self.ring1_name or self.name + "r1": ColorSolver.hue_sort(raw_colors[6:12]),
-            self.tints_name
-            or self.name + "tint": ColorSolver.hue_sort(raw_colors[18:24]),
+            self.tints_name or self.name + "tint": ColorSolver.hue_sort(raw_colors[18:24]),
             self.ring2_name or self.name + "r2": ColorSolver.hue_sort(raw_colors[12:18]),
         }
         return out

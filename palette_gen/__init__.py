@@ -8,9 +8,7 @@ from palette_gen.processors.yaml_palette import gen_palette_cmd
 
 def main() -> None:
     parser = ArgumentParser()
-    parser.add_argument(
-        "--out", help="output file name. format depends on command.", type=str
-    )
+    parser.add_argument("--out", help="output file name. format depends on command.", type=str)
 
     sub = parser.add_subparsers(
         description="subcommands",
@@ -43,16 +41,12 @@ def main() -> None:
     # scheme generation
     sub_scheme = sub.add_parser("scheme", help="create a colorscheme from a template")
     sub_scheme.add_argument("spec", help="scheme spec config file, yaml", type=str)
-    sub_scheme.add_argument(
-        "palette", help="generated palette scheme file, yaml", type=str
-    )
+    sub_scheme.add_argument("palette", help="generated palette scheme file, yaml", type=str)
     sub_scheme.set_defaults(cmd=JBScheme.process_config)
 
     sub_theme = sub.add_parser("theme", help="create a .theme.json from a template")
     sub_theme.add_argument("spec", help="theme spec config file, yaml", type=str)
-    sub_theme.add_argument(
-        "palette", help="generated palette scheme file, yaml", type=str
-    )
+    sub_theme.add_argument("palette", help="generated palette scheme file, yaml", type=str)
     sub_theme.add_argument(
         "--inline-colors",
         help='inline all colors and omit the "colors" dict',

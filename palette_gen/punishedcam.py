@@ -15,8 +15,8 @@ from palette_gen.fastcolors import (
     XYZ_to_xyY_jit,
     atan2_360,
     cos_deg,
-    sin_deg,
     sRGB_to_XYZ_jit,
+    sin_deg,
     xyY_E,
     xyY_to_XYZ_jit,
 )
@@ -46,9 +46,7 @@ CIECAM02_arange = np.array([*range(len(CIECAM02_hs))])
 
 
 @njit
-def matmul_last_axis(
-    mat: NDArray[np.float64], vecs: NDArray[np.float64]
-) -> NDArray[np.float64]:
+def matmul_last_axis(mat: NDArray[np.float64], vecs: NDArray[np.float64]) -> NDArray[np.float64]:
     """
     Applies
         v = Mu
@@ -175,13 +173,12 @@ def XYZ_to_PUNISHEDCAM_JabQMsh_jit(
         F = -0.003 * S_R + 1.1474
         c = 0.023 * S_R + 0.7887
         Nc = 0.0203 * S_R + 1.2369
+    elif S_R > 0.2:
+        F, c, Nc = 1.0, 0.69, 1.0
+    elif 0 < S_R < 0.2:
+        F, c, Nc = 0.9, 0.59, 0.95
     else:
-        if S_R > 0.2:
-            F, c, Nc = 1.0, 0.69, 1.0
-        elif 0 < S_R < 0.2:
-            F, c, Nc = 0.9, 0.59, 0.95
-        else:
-            F, c, Nc = 0.8, 0.525, 0.8
+        F, c, Nc = 0.8, 0.525, 0.8
 
     ###
     # 2. LMS TRANSFORM
@@ -310,9 +307,7 @@ def XYZ_to_PUNISHEDCAM_JabQMsh_jit(
 
 # noinspection PyPep8Naming
 @njit
-def de_punished_jab(
-    jab1: NDArray[np.float64], jab2: NDArray[np.float64]
-) -> NDArray[np.float64]:
+def de_punished_jab(jab1: NDArray[np.float64], jab2: NDArray[np.float64]) -> NDArray[np.float64]:
     return np.sqrt(((jab1[..., :3] - jab2[..., :3]) ** 2).sum(axis=-1))
 
 

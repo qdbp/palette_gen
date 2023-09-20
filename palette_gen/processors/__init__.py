@@ -3,7 +3,8 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from logging import warning
-from typing import Any, Mapping
+from typing import Any
+from collections.abc import Mapping
 
 # TODO use color class instead of str for hex colors
 from palette_gen.solvers import RGBColor
@@ -19,7 +20,7 @@ class ConcretePalette:
     @classmethod
     def from_config(cls, palette_dict: dict[str, Any]) -> ConcretePalette:
         hex_map = {}
-        for palette_name, palette in palette_dict.pop("palette").items():
+        for _palette_name, palette in palette_dict.pop("palette").items():
             for item in palette:
                 name = item["name"]
                 if name in hex_map:
@@ -40,19 +41,17 @@ class ConcretePalette:
         try:
             name, ix = re.findall("([a-z]+)_?([0-9]+)", color)[0]
             ix = int(ix)
-            keys = list(
-                map(
-                    lambda s: s.format(name, ix),
-                    [
-                        "{}{}",
-                        "{}{:01d}",
-                        "{}{:02d}",
-                        "{}{:03d}",
-                        "{}{:04d}",
-                        "{}{:05d}",
-                    ],
-                )
-            )
+            keys = [
+                s.format(name, ix)
+                for s in [
+                    "{}{}",
+                    "{}{:01d}",
+                    "{}{:02d}",
+                    "{}{:03d}",
+                    "{}{:04d}",
+                    "{}{:05d}",
+                ]
+            ]
         except (IndexError, ValueError):
             keys = [color]
 

@@ -17,9 +17,7 @@ from palette_gen.solvers.color import ColorSolver
 
 
 class PaletteSolver:
-    def __init__(
-        self, name: str, vs: ViewingSpec, palette_spec: dict[str, ColorSolver]
-    ) -> None:
+    def __init__(self, name: str, vs: ViewingSpec, palette_spec: dict[str, ColorSolver]) -> None:
         self.name = name
         self.vs = vs
         self.p_specs = palette_spec
@@ -36,8 +34,7 @@ class PaletteSolver:
                 for key, sublist in solved_colors.items():
                     if key in all_colors:
                         raise ValueError(
-                            f"Palette-generated key {key} conflicts with an"
-                            f"existing colorset."
+                            f"Palette-generated key {key} conflicts with anexisting colorset."
                         )
                     all_colors[key] = sublist.copy()
 
@@ -75,12 +72,8 @@ class PaletteSolver:
 
         marker_cycle = ["circle", "square", "diamond", "x"]
 
-        jab_arr = np.array(
-            list(color.jab for color in chain.from_iterable(self.colors_dict.values()))
-        )
-        rgb_arr = np.array(
-            list(color.rgb for color in chain.from_iterable(self.colors_dict.values()))
-        )
+        jab_arr = np.array([color.jab for color in chain.from_iterable(self.colors_dict.values())])
+        rgb_arr = np.array([color.rgb for color in chain.from_iterable(self.colors_dict.values())])
 
         symbols = []
         text = []
@@ -96,7 +89,7 @@ class PaletteSolver:
                     x=jab_arr[..., 1],
                     y=jab_arr[..., 2],
                     z=jab_arr[..., 0],
-                    marker=dict(color=list(map(to_hex, rgb_arr)), size=6, symbol=symbols),
+                    marker={"color": list(map(to_hex, rgb_arr)), "size": 6, "symbol": symbols},
                     mode="markers",
                     text=text,
                 ),
@@ -104,7 +97,7 @@ class PaletteSolver:
                     x=jab_edges[:, 1],
                     y=jab_edges[:, 2],
                     z=jab_edges[:, 0],
-                    marker=dict(color="black", size=1),
+                    marker={"color": "black", "size": 1},
                     mode="markers",
                 ),
             ]
@@ -112,7 +105,6 @@ class PaletteSolver:
         return fig
 
     def draw_colors(self) -> None:
-
         fig: Figure = plt.figure()
 
         gs = GridSpec(figure=fig, nrows=1, ncols=10)
@@ -145,28 +137,24 @@ class PaletteSolver:
     def dump_html(self) -> str:
         html = HTML()
 
-        with html as h:
-            with h.body(style=f"background-color:{self.vs.bg_hex};") as b:  # type: ignore
-                with b.table() as t:
-                    for key, colors in self.colors_dict.items():
-                        with t.tr() as row:
-                            for cx, color in enumerate(colors):
-                                seq_name = f"{key.upper()}{cx:02d}"
-                                if sum(color.rgb) > 1.5:
-                                    fc = "black"
-                                else:
-                                    fc = "white"
-                                with row.td(
-                                    style=f"background:{color.hex};color:{fc};"
-                                ) as cell:
-                                    print(seq_name)
-                                    if color.name is not None:
-                                        with cell.br():
-                                            pass
-                                        print(color.name)
-                                    with cell.br():
-                                        pass
-                                    print(color.hex.upper())
+        with html as h, h.body(style=f"background-color:{self.vs.bg_hex};") as b, b.table() as t:
+            for key, colors in self.colors_dict.items():
+                with t.tr() as row:
+                    for cx, color in enumerate(colors):
+                        seq_name = f"{key.upper()}{cx:02d}"
+                        if sum(color.rgb) > 1.5:
+                            fc = "black"
+                        else:
+                            fc = "white"
+                        with row.td(style=f"background:{color.hex};color:{fc};") as cell:
+                            print(seq_name)
+                            if color.name is not None:
+                                with cell.br():
+                                    pass
+                                print(color.name)
+                            with cell.br():
+                                pass
+                            print(color.hex.upper())
 
         return str(html)
 

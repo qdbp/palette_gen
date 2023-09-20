@@ -1,49 +1,11 @@
 repos:
-  # AUTOFLAKE
-  - hooks:
-      - id: autoflake
-        args:
-          - --in-place
-          - --remove-unused-variables
-          - --remove-all-unused-imports
-    repo: https://github.com/myint/autoflake
-    rev: 'v1.4'
-  # BLACK-   id: autoflake
-  - hooks:
-      - id: black
-        language_version: python3
-    repo: https://github.com/psf/black
-    rev: 22.3.0
-  # DOCFORMATTER
-  - hooks:
-      - id: docformatter
-        args:
-          - -i
-          - -r
-          - --pre-summary-newline
-          - --make-summary-multi-line
-    repo: https://github.com/myint/docformatter
-    rev: 'v1.4'
-  # ISORT
-  - hooks:
-      - id: isort
-    repo: https://github.com/pycqa/isort
-    rev: '5.10.1'
-  - hooks:
-    - id: mypy
-      name: mypy
-      entry: .venv/bin/mypy
-      language: system
-      always_run: true
-      files: '\.py$'
-      args:
-      - --config-file=mypy.ini
-      - palette_gen
-      pass_filenames: false
-    - id: pytest
-      name: pytest
-      entry: .venv/bin/pytest
-      language: system
-      always_run: true
-      pass_filenames: false
-    repo: local
+- repo: https://github.com/psf/black
+  rev: '23.9.1'
+  hooks:
+  - id: black
+- repo: https://github.com/charliermarsh/ruff-pre-commit
+  rev: "v0.0.290"
+  hooks:
+  - id: ruff
+    args:
+    - --fix

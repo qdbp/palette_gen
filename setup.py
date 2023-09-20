@@ -11,7 +11,7 @@ def read_requirements() -> list[str]:
 
 setup(
     name="palette_gen",
-    version="1.0.2",
+    version="1.1.0",
     packages=find_packages(),
     url="http://github.com/qdbp/palette_gen",
     license="",
@@ -20,4 +20,5 @@ setup(
     description="color scheme generator",
     entry_points={"console_scripts": ["palette-gen=palette_gen:main"]},
     install_requires=read_requirements(),
+    python_requires=">=3.11",
 )

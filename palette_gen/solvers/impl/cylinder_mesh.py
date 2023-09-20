@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Iterable
+from collections.abc import Iterable
 
 import numpy as np
 from numpy.typing import NDArray
@@ -38,15 +38,12 @@ class CylinderMesh(FixedJabTargetSolver):
         """
 
         out = np.empty((6, 2))
-        xs: NDArray[np.float64] = (
-            np.linspace(0, 2 * np.pi, num=6, endpoint=False) + offset * np.pi / 3
-        )
+        xs: NDArray[np.float64] = np.linspace(0, 2 * np.pi, num=6, endpoint=False) + offset * np.pi / 3
         out[:, 0] = np.cos(xs)
         out[:, 1] = np.sin(xs)
         return out
 
     def jab_target(self, ab_offset: NDArray[np.float64]) -> NDArray[np.float64]:
-
         θ = 2 * np.pi / self.n_colors
         h = np.sqrt(2) * np.sqrt(np.cos(θ / 2) - np.cos(θ)) * self.base_m / 100
 
@@ -67,7 +64,6 @@ class CylinderMesh(FixedJabTargetSolver):
         return out
 
     def organize_colors(self, raw_colors: Iterable[JabColor]) -> OrganizedColors:
-
         raw_colors = list(raw_colors)
         out = {}
         for name, ring in zip(self.ring_names, range(self.n_rings)):

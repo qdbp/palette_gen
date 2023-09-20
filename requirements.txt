@@ -1,6 +1,7 @@
-numpy==1.21.6
-numba==0.55.1
-matplotlib==3.5.2
-scipy==1.8.0
-pyyaml==6.0
-colour-science==0.4.1
+numpy~=1.24.0
+numba~=0.57.0
+matplotlib~=3.8.0
+scipy~=1.11.0
+pyyaml~=6.0.0
+colour-science==0.4.3
+plotly~=5.17.0

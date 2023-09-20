@@ -1,5 +1,5 @@
+import logging
 from argparse import Namespace
-from os.path import splitext
 from pathlib import Path
 
 import numpy as np
@@ -23,9 +23,7 @@ def gen_palette_cmd(args: Namespace) -> None:
     """
     spec_path = Path(args.spec)
     if (out_fn := getattr(args, "out", None)) is None:
-        out_path = spec_path.parent.joinpath(
-            spec_path.stem + ".palette" + spec_path.suffix
-        )
+        out_path = spec_path.parent.joinpath(spec_path.stem + ".palette" + spec_path.suffix)
     else:
         out_path = Path(out_fn)
 
@@ -39,16 +37,12 @@ def gen_palette(
     do_html: bool,
     do_cone: bool,
 ) -> None:
-
     np.set_printoptions(precision=2, suppress=True)
 
     with spec_path.open() as f:
         full_spec = yaml.full_load(f)
 
-    views = {
-        name: ViewingSpec(name=name, **view_args)
-        for name, view_args in full_spec["views"].items()
-    }
+    views = {name: ViewingSpec(name=name, **view_args) for name, view_args in full_spec["views"].items()}
 
     constructors = {
         "jab_ring": JabRingSpec,
@@ -66,7 +60,6 @@ def gen_palette(
     }
 
     for view_name, vs in views.items():
-
         if explicit_views and view_name not in explicit_views:
             continue
 
@@ -76,9 +69,7 @@ def gen_palette(
             "bg_hex": vs.bg_hex,
         }
 
-        view_fn = out_path.parent.joinpath(
-            f"{out_path.stem}.{view_name}{out_path.suffix}"
-        )
+        view_fn = out_path.parent.joinpath(f"{out_path.stem}.{view_name}{out_path.suffix}")
 
         print(f"Solving palette {view_name}...")
         palette = PaletteSolver(view_name + "_palette", vs=vs, palette_spec=palette_spec)
@@ -88,15 +79,11 @@ def gen_palette(
         with view_fn.open("w") as f:
             yaml.dump(out, f)
 
-        base_fn = splitext(view_fn)[0]
         if do_html:
-            html_fn = base_fn + ".html"
-            with open(html_fn, "w") as f:
-                print(f"Saving html to {html_fn}")
-                f.write(palette.dump_html())
+            view_fn.with_suffix(".html").write_text(palette.dump_html())
 
         if do_cone:
             fig = palette.draw_cone()
-            cone_fn = base_fn + ".cone.html"
-            print(f"Saving cone plot to {cone_fn}")
+            cone_fn = view_fn.with_suffix(".cone.html")
+            logging.info(f"Saving cone plot to {cone_fn}")
             fig.write_html(cone_fn)

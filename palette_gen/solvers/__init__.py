@@ -54,7 +54,6 @@ class ViewingSpec:
 
 @dataclass(order=True)
 class RGBColor:
-
     rgb: tuple[float, float, float]
     name: str | None = field(init=False, default_factory=lambda: None)
 
@@ -76,7 +75,6 @@ class RGBColor:
 
 @dataclass(order=True)
 class JabColor(RGBColor):
-
     vs: ViewingSpec
 
     @cached_property

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Any, Iterable
+from typing import Any
+from collections.abc import Iterable
 
 import numpy as np
 from numpy.typing import NDArray
@@ -18,7 +19,6 @@ class JMatchedGreys(FixedJabTargetSolver):
         self.j_dict = j_dict
 
     def jab_target(self, ab_offset: NDArray[np.float64]) -> NDArray[np.float64]:
-
         out = np.empty((len(self.j_dict), 3))
         out[:, 1:] = ab_offset[None, :]
         out[:, 0] = np.array([*self.j_dict.values()])

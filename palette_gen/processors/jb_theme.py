@@ -2,7 +2,9 @@
 Declarative JetBrains .theme.json generator using palette_gen colors.
 """
 import json
+import logging
 from argparse import Namespace
+from pathlib import Path
 from typing import Any
 
 import yaml
@@ -12,13 +14,9 @@ from palette_gen.util import map_leaves
 
 
 def process_theme(args: Namespace) -> None:
-    with open(args.palette, "r") as f:
-        palette = ConcretePalette.from_config(yaml.full_load(f))
-
-    print(f"Generating theme {palette.name}, view {palette.view}")
-
-    with open(args.spec, "r") as f:
-        theme_config = yaml.full_load(f)
+    palette = ConcretePalette.from_config(yaml.full_load(Path(args.palette).read_text()))
+    logging.info(f"Generating theme {palette.name}, view {palette.view}")
+    theme_config = yaml.full_load(Path(args.spec).read_text())
 
     meta = theme_config["meta"]
     name = meta["name"]
@@ -49,6 +47,5 @@ def process_theme(args: Namespace) -> None:
     if (out_fn := args.out) is None:
         out_fn = name + f".{palette.view}.theme.json"
 
-    print(f"Saving generated theme to {out_fn}")
-    with open(out_fn, "w") as f:
-        json.dump(out, f, indent=2)
+    logging.info(f"Saving generated theme to {out_fn}")
+    Path(out_fn).write_text(json.dumps(out, indent=2))

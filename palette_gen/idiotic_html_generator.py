@@ -7,7 +7,8 @@ from __future__ import annotations
 import builtins
 import sys
 from io import StringIO
-from typing import Any, Callable, TypeVar
+from typing import Any, TypeVar
+from collections.abc import Callable
 
 H = TypeVar("H", bound="HTML")
 
@@ -16,11 +17,9 @@ true_print = print
 
 
 class HTML:
-
     PARENT = None
 
     def __init__(self, tag: str = "html", _parent: HTML = None, **attrs: str) -> None:
-
         self.atts = attrs
         self.tag = tag
         self._parent = _parent
@@ -36,7 +35,6 @@ class HTML:
         return _mk_node
 
     def __enter__(self) -> HTML:
-
         sys.stdout = self.out
 
         # noinspection PyUnusedLocal
@@ -51,9 +49,7 @@ class HTML:
 
         attr_string = " ".join(f'{k}="{v}"' for k, v in self.atts.items())
         self.out.write(
-            "\n" + "\t" * self.indent + f"<{self.tag}"
-            f"{' ' if attr_string else ''}"
-            f"{attr_string}>"
+            "\n" + "\t" * self.indent + f"<{self.tag}{' ' if attr_string else ''}{attr_string}>"
         )
         return self
 

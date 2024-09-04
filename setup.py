@@ -11,7 +11,7 @@ def read_requirements() -> list[str]:
 
 setup(
     name="palette_gen",
-    version="1.1.0",
+    version="2.0.0",
     packages=find_packages(),
     url="http://github.com/qdbp/palette_gen",
     license="",

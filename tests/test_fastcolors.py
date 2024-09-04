@@ -1,6 +1,7 @@
 import itertools
 
 import numpy as np
+import pytest
 from colour import (
     HSV_to_RGB,
     Lab_to_LCHab,
@@ -68,7 +69,7 @@ def test_converters():
             print(np.hstack([our_output, target])[bad_rows])
             print("absolute difference (bad rows)")
             print(np.hstack([src, np.abs(our_output - target)])[bad_rows])
-            assert 0
+            pytest.fail("failed comparison")
 
 
 def test_de2000() -> None:

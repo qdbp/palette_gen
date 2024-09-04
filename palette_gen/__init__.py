@@ -1,14 +1,14 @@
 import sys
 from argparse import ArgumentParser
 
-from palette_gen.processors.jb_scheme import JBScheme
-from palette_gen.processors.jb_theme import process_theme
+from palette_gen.processors.jb_scheme import JBSchemeProcessor
+from palette_gen.processors.jb_theme import JBThemeProcessor
+from palette_gen.processors.nvim_scheme import NvimProcessor
 from palette_gen.processors.yaml_palette import gen_palette_cmd
 
 
 def main() -> None:
     parser = ArgumentParser()
-    parser.add_argument("--out", help="output file name. format depends on command.", type=str)
 
     sub = parser.add_subparsers(
         description="subcommands",
@@ -19,7 +19,8 @@ def main() -> None:
 
     # palette generation
     sub_palette = sub.add_parser("palette", help="solve for palette colors")
-    sub_palette.add_argument("spec", help="palette spec yaml config", type=str)
+    sub_palette.add_argument("--out", help="output yaml file name.", type=str, required=True)
+    sub_palette.add_argument("--spec", help="palette spec yaml config", type=str, required=True)
     sub_palette.add_argument(
         "views",
         help="Views to generate palettes for. If empty, generates all views.",
@@ -38,27 +39,24 @@ def main() -> None:
     )
     sub_palette.set_defaults(cmd=gen_palette_cmd)
 
-    # scheme generation
-    sub_scheme = sub.add_parser("scheme", help="create a colorscheme from a template")
-    sub_scheme.add_argument("spec", help="scheme spec config file, yaml", type=str)
-    sub_scheme.add_argument("palette", help="generated palette scheme file, yaml", type=str)
-    sub_scheme.set_defaults(cmd=JBScheme.process_config)
-
-    sub_theme = sub.add_parser("theme", help="create a .theme.json from a template")
-    sub_theme.add_argument("spec", help="theme spec config file, yaml", type=str)
-    sub_theme.add_argument("palette", help="generated palette scheme file, yaml", type=str)
-    sub_theme.add_argument(
-        "--inline-colors",
-        help='inline all colors and omit the "colors" dict',
-        action="store_true",
-    )
-    sub_theme.set_defaults(cmd=process_theme)
+    # TODO dynamically generate these plugin style
+    for proc_cls in [JBSchemeProcessor, JBThemeProcessor, NvimProcessor]:
+        cls_parser = sub.add_parser(proc_cls.cmd_name, help=proc_cls.__doc__)
+        proc_cls.configure_parser(cls_parser)
+        cls_parser.set_defaults(cmd=proc_cls.process)
 
     args = parser.parse_args()
     args.cmd(args)
 
-    sys.exit(0)
-
 
 if __name__ == "__main__":
+    sys.argv.extend(
+        [
+            "nvim",
+            "-p",
+            "/home/main/programming/projects/SalmonThemeBkp/build/palette.Twilight.yaml",
+            "-o",
+            "test.lua",
+        ]
+    )
     main()

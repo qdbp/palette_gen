@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from itertools import chain
 from typing import Any
 
@@ -83,7 +81,7 @@ class PaletteSolver:
 
         jab_edges = self.vs.rgb_to_cam(self.mk_cube_surface_grid())
 
-        fig = go.Figure(
+        return go.Figure(
             data=[
                 go.Scatter3d(
                     x=jab_arr[..., 1],
@@ -102,7 +100,6 @@ class PaletteSolver:
                 ),
             ]
         )
-        return fig
 
     def draw_colors(self) -> None:
         fig: Figure = plt.figure()
@@ -169,8 +166,7 @@ class PaletteSolver:
             ]
             for p_name, colors in self.colors_dict.items()
         }
-        out = {"palette": p_dict}
-        return out
+        return {"palette": p_dict}
 
     @property
     def is_dark(self) -> bool:

@@ -1,7 +1,8 @@
+import logging
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 from math import atan2
 from typing import Any, final
-from collections.abc import Iterable
 
 import numpy as np
 from numba import njit
@@ -103,7 +104,7 @@ class FixedJabTargetSolver(ColorSolver, ABC):
         logit_rgb = np.random.normal(size=jab_target.shape).ravel()
 
         name = getattr(self, "name", f"anonymous {self.__class__.__name__}")
-        print(f"... solving color set {name}...")
+        logging.info(f"... solving color set {name}...")
 
         res = minimize(
             self._loss,
@@ -129,5 +130,4 @@ class FixedJabTargetSolver(ColorSolver, ABC):
 
         jabqmsh = XYZ_to_PUNISHEDCAM_JabQMsh_jit(sRGB_to_XYZ_jit(rgb), xyz_r, Lsw=Lsw, Lb=Lb, Lmax=Lmax)
         jab = jabqmsh[..., :3]
-        loss = ((jab - jab_target) ** 2).sum()
-        return loss  # type: ignore
+        return ((jab - jab_target) ** 2).sum()

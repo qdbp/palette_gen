@@ -1,5 +1,5 @@
-from dataclasses import dataclass
 from collections.abc import Iterable
+from dataclasses import dataclass
 
 import numpy as np
 from numpy.typing import NDArray
@@ -53,7 +53,6 @@ class CylinderMesh(FixedJabTargetSolver):
         step = np.pi / self.n_colors
         for ring in range(self.n_rings):
             sl = slice(ring * self.n_colors, (ring + 1) * self.n_colors)
-            print(sl)
 
             out[sl, 0] = self.base_j + ring * h
             out[sl, 1] = self.base_m * np.cos(angles) / 100

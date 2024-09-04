@@ -2,13 +2,12 @@
 This is the sort of late-night absurdity that gives life the astringent meaning
 we all crave.
 """
-from __future__ import annotations
 
 import builtins
 import sys
-from io import StringIO
-from typing import Any, TypeVar
 from collections.abc import Callable
+from io import StringIO
+from typing import Any, Self, TypeVar, final
 
 H = TypeVar("H", bound="HTML")
 
@@ -16,10 +15,11 @@ true_stdout = sys.stdout
 true_print = print
 
 
+@final
 class HTML:
     PARENT = None
 
-    def __init__(self, tag: str = "html", _parent: HTML = None, **attrs: str) -> None:
+    def __init__(self, tag: str = "html", _parent: Self | None = None, **attrs: str) -> None:
         self.atts = attrs
         self.tag = tag
         self._parent = _parent
@@ -34,11 +34,11 @@ class HTML:
 
         return _mk_node
 
-    def __enter__(self) -> HTML:
+    def __enter__(self) -> Self:
         sys.stdout = self.out
 
         # noinspection PyUnusedLocal
-        def _print(*args: Any, end: str = "", **kwargs: Any) -> None:
+        def _print(*args: Any, end: str = "", **kwargs: Any) -> None:  # noqa: ARG001
             self.out.write("\n")
             self.out.write("\t" * (self.indent + 1))
             self.out.write(*args)

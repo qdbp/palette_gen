@@ -1,0 +1,338 @@
+#file: noinspection YAMLUnusedAnchor
+meta:
+    name: Salmon
+    author: Evgeny Naumov
+    dark: false
+    scheme: Restraint
+anchors:
+    # these anchors, as well as other colors, reference the colors in the palette produced from colorspec.yaml
+    my_fg: &my_fg fg_dark
+    my_dark_fg: &my_dark_fg black
+    my_light_fg: &my_light_fg fg
+    my_active_color: &my_active_color white
+    my_border_color: &my_border_color neutral
+
+    # backgrounds
+    my_header_bg: &my_header_bg bg_3
+    my_bg: &my_bg bg_3
+    my_light_bg: &my_light_bg wht_3
+    my_airy_bg: &my_airy_bg wht_7  # for notifications and such
+
+    # disabled elements
+    my_disabled_fg: &my_disabled_fg fg_light
+    my_disabled_bg: &my_disabled_bg bg_3
+
+    my_input_bg: &my_text_input_bg wht_5
+    my_nontext_input_bg: &my_nontext_input_bg wht_6
+    my_input_hover_bg: &my_input_hover_bg hl_6
+
+    # active background
+    my_hover_bg: &my_hover_bg wht_4
+    my_selected_bg: &my_selected_bg wht_3
+    my_pressed_bg: &my_pressed_bg wht_7
+    my_sel_text_bg: &my_sel_text_bg hl_5
+
+    # accented backgrounds
+    my_accented_orange_bg: &my_accented_orange_bg hl_4
+    my_accented_green_bg: &my_accented_green_bg hl_5
+    my_accented_blue_bg: &my_accented_blue_bg hl_7
+
+    # special text colors
+    my_link_color: &my_link_color pri_5
+    my_standout_text_color: &my_standout_text_color pri_5
+
+ui:
+    # DEFAULTS
+    SearchEverywhere.List.settingsBackground: *my_bg
+    "*":
+        # Default Backgrounds
+        background: *my_bg
+        inactiveBackground: *my_bg
+        inactiveTitleBackground: *my_bg
+        focusCellBackground: *my_bg
+        floatingBackground: *my_bg
+        nonEditableBackground: *my_bg
+        unselectedBackground: *my_bg
+        textBackground: *my_bg
+        # ... inactive
+        inactiveColoredFileBackground: *my_bg
+        inactiveColoredTabBackground: *my_bg
+        settingsBackground: *my_bg
+
+        # Lighter Backgrounds -- highlights and selections
+        # active
+        pressedBackground: *my_active_color
+
+        # light
+        activeBackground: *my_light_bg
+        activeTitleBackground: *my_light_bg
+        underlinedBackground: *my_light_bg
+        hoverBackground: *my_hover_bg
+
+        # .. selection
+        selected: *my_selected_bg
+        selectedBackground: *my_selected_bg
+        selectedInactiveBackground: *my_selected_bg
+        selectionInactiveBackground: *my_selected_bg
+        underlinedTabBackground: *my_selected_bg
+        selectionBackground: *my_selected_bg
+        selectedButtonColor: *my_selected_bg
+
+        # Dark Backgrounds -- disabled and inactive
+        # ... disabled
+        disabledBackground: *my_disabled_bg
+        hoverInactiveBackground: *my_disabled_bg
+        lightSelectionInactiveBackground: *my_disabled_bg
+        mouseShortcutBackground: *my_nontext_input_bg
+
+        # separator background
+        separatorBackground: *my_border_color
+        separatorColor: *my_border_color
+        bottomSeparatorColor: *my_border_color
+
+        # Other background
+        errorBackground: hl2
+        warningBackground: hl3
+
+        ## FOREGROUNDS
+        # default
+        foreground: *my_fg
+        light: *my_fg
+        select: *my_fg
+
+        selectionForeground: *my_dark_fg
+        selectedForeground: *my_dark_fg
+        lightSelectionForeground: *my_fg
+
+        acceleratorForeground: *my_fg
+        acceleratorSelectionForeground: *my_fg
+
+        # lighter
+        inactiveForeground: *my_disabled_fg
+        infoForeground: *my_light_fg
+
+        # disabled
+        foregroundInactive: *my_disabled_fg
+        disabledForeground: *my_disabled_fg
+        selectedDisabledForeground: *my_disabled_fg
+        disabledText: *my_disabled_fg
+
+        # other
+        shortcutForeground: *my_link_color
+        modifiedItemForeground: *my_standout_text_color  # e.g. changed keybinds
+        modifyingValueForeground: *my_standout_text_color
+
+        ## BORDERS
+        # idea: all borders are the same except disabled one, which conform to the
+        # stlying for disabled elements.
+        hoverBorderColor: *my_border_color
+        pressedBorderColor: *my_border_color
+        focusedBorderColor: *my_border_color
+        borderColor: *my_border_color
+        startBorderColor: *my_border_color
+        endBorderColor: *my_border_color
+        borderLight: *my_border_color
+        borderShadow: *my_border_color
+        ContrastBorderColor: *my_border_color
+        windowBorder: *my_border_color
+        selectedStartBorderColor: *my_border_color
+        selectedEndBorderColor: *my_border_color
+
+        # disabled
+        disabledBorderColor: *my_disabled_fg
+        inactiveBorderColor: *my_disabled_fg
+
+        ## ICONS
+        contentAreaColor: *my_fg
+
+    ### OVERRIDES
+
+    ## GENERIC
+    TextField: &my_text_field
+        background: *my_text_input_bg
+        selectionBackground: *my_sel_text_bg
+
+    FormattedTextField: *my_text_field
+    PasswordField: *my_text_field
+    Editor: *my_text_field
+    # SearchField: *my_text_field
+    # SearchEverywhere: *my_text_field
+    TextPane: *my_text_field
+    TextArea: *my_text_field
+
+    SearchEverywhere:
+        SearchField: *my_text_field
+
+    SearchResults:
+        Ordinal.File.Foreground: *my_fg
+        Repeated.File.Foreground: tone_5
+
+    EditorPane:
+        background: bg
+
+    ComboBox:
+        background: *my_text_input_bg
+        nonEditableBackground: *my_nontext_input_bg
+        selectionBackground: *my_input_hover_bg
+        ArrowButton:
+            background: *my_text_input_bg
+            nonEditableBackground: *my_nontext_input_bg
+            disabledIconColor: *my_disabled_fg
+            iconColor: *my_fg
+
+    Bookmark:
+        iconBackground: *my_accented_green_bg
+        Mnemonic:
+            iconBorderColor: *my_border_color
+            iconBackground: *my_accented_green_bg
+
+    Borders:
+        color: *my_border_color
+
+    FileColor:
+        Blue: hl_7
+        Green: hl_5
+        Yellow: hl_4
+        Orange: hl_3
+        Rose: hl_2
+        Violet: hl_1
+
+    Link:
+        activeForeground: &my_link tone005
+        hoverForeground: *my_link
+        pressedForeground: *my_link
+        visitedForeground: tone004
+
+    SearchMatch:
+        startBackground: *my_sel_text_bg
+        endBackground: *my_sel_text_bg
+
+    Popup:
+        Header.activeBackground: *my_header_bg
+
+    CompletionPopup:
+        selectionBackground: bg_5
+        selectionInactiveBackground: *my_bg
+
+    ActionButton:
+        pressedBackground: *my_pressed_bg
+
+    Button:
+        startBackground: *my_light_bg
+        endBackground: *my_bg
+        default:
+            startBackground: wht_6
+            endBackground: hl_6
+
+    Notification:
+        background: *my_light_bg
+        ToolWindow:
+            informativeBackground: hl_5
+            informativeBorderColor: *my_border_color
+
+    NotificationsToolwindow:
+        newNotification:
+            background: *my_light_bg
+
+    TabbedPane:
+        focusColor: *my_selected_bg
+        selected: *my_selected_bg
+        underlineColor: *my_light_fg
+        hoverColor: *my_hover_bg
+
+    TableHeader:
+        background: *my_header_bg
+    Table:
+        selectionForeground: *my_dark_fg
+        focusCellBackground: *my_nontext_input_bg
+        stripeColor: dbg_3
+        gridColor: wht_5
+        sortIconColor: bg_darker
+
+    # SPECIALIZED
+    VersionControl:
+        GitLog:
+            headIconColor: tint_2
+            remoteBranchIconColor: tint_0
+            localBranchIconColor: tint_4
+        Log:
+            Commit:
+                currentBranchBackground: hl_6
+                hoveredBackground: wht_6
+
+    Plugins:
+        Button:
+            # install
+            installForeground: *my_fg
+            installFillForeground: *my_fg
+            installBackground: hl_5
+            installBorderColor: *my_border_color
+            installFillBackground: hl_5
+            # update
+            updateForeground: *my_fg
+            updateBackground: hl_7
+            updateBorderColor: *my_border_color
+        lightSelectionBackground: *my_light_bg
+        tagBackground: hl_3
+        tagForeground: *my_fg
+
+    ProgressBar:
+        progressColor: hyper_7
+        failedColor: hyper_2
+        failedEndColor: hyperhl_2
+        indeterminateEndColor: fg
+        indeterminateStartColor: shd_2
+        trackColor: shd_2
+        passedColor: pri_3
+        passedEndColor: tint_3
+
+icons:
+    ColorPalette:
+        # should be white in principle, but this is used for more than text...
+        # the non-text solid blocks require this to be black, basically
+        # Objects
+        Objects.BlackText: black
+        Objects.Grey: *my_fg
+        Objects.Pink: hyperhl_1
+        Objects.Red: hyperhl_2
+        Objects.Blue: hyperhl_7
+        Objects.Yellow: hyperhl_4
+        Objects.YellowDark: tint_2
+        Objects.Green: hyperhl_5
+        Objects.GreenAndroid: hyperhl_5
+        Objects.RedStatus: hyperhl_2
+        Objects.Purple: hyperhl_0
+        # Actions
+        Actions.Blue: hyper_7
+        Actions.Green: hyper_5
+        Actions.Red: hyper_2
+        Actions.Yellow: hyper_4
+        Actions.Grey: *my_fg
+        Actions.GreyInline: *my_fg
+        Actions.GreyInline.Dark: *my_dark_fg
+        # new UI color remapping
+        Red.Stroke: pri_01
+        Red.SecondaryStroke: pri_01
+        Red.Fill: wht_02
+
+        # Checkboxes
+        Checkbox.Background.Disabled: *my_disabled_bg
+        Checkbox.Border.Disabled: *my_disabled_bg
+
+        Checkbox.Border.Default: *my_border_color
+        Checkbox.Foreground.Default: *my_nontext_input_bg
+        Checkbox.Background.Default: *my_nontext_input_bg
+
+        Checkbox.Foreground.Selected: *my_active_color
+        Checkbox.Background.Selected: hyper_7
+        Checkbox.Border.Selected: hyper_7
+
+# TODO autogenerate defaults
+iconColorsOnSelection:
+    hyper_1: hyper_1
+    hyper_2: hyper_2
+    hyper_3: hyper_3
+    hyper_4: hyper_4
+    hyper_5: hyper_5
+    hyper_6: hyper_6
+    hyper_7: hyper_7

@@ -1,0 +1,774 @@
+meta:
+    parent_scheme: Default
+    name: Restraint
+    ide_version: "2020.3.3.0.0"
+anchors:
+    ## ALIASES
+    preamble:
+        ft_props:
+            ft_none: &ft_none 0
+            bold: &bold 1
+            italic: &italic 2
+            bold_italic: &bold_italic 3
+        effect_props:
+            underlined: &underlined 1
+            underwaved: &underwaved 2
+            strikethrough: &strikethrough 3
+            underdots: 5
+            bordered: &bordered 6
+        # never enough pointers!
+        indirection:
+            my_fg: &my_fg fg_dark
+            my_fg_light: &my_fg_light fg_light
+            my_err_fg: &my_err_fg ult_2
+
+    ## DESIGN LANGUAGE
+    mutable_ft_mixin: &ft_mutable_mixin
+        ft: *italic
+    control_flow_ft_mixin: &ft_control_flow_mixin
+        ft: *bold
+
+    # specials: prominent
+    my_builtin_color: &my_builtin_color ult_0
+    my_metadata_color: &my_metadata_color ult_1
+    my_label_color: &my_label_color ult_2
+    my_macro_color: &my_macro_color ult_4
+    my_constant_color: &my_constant_color ult_5
+
+    # context and annotation: toned down
+    my_scope_color: &my_scope_color tint_3
+    my_annotation_color: &my_annotation_color tint_5
+
+    # identifiers
+    my_nonlocal_color: &my_nonlocal_color ult_1
+    my_member_color: &my_field_color pri_1
+    my_capture_color: &my_capture_color pri_2
+    # use the same color for async and captures: an async call carries a captured
+    # frame context, the ideas at play are the same.
+    my_async_color: &my_async_color pri_2
+    # for variables whose semantics are modified by their context: e.g. smart casts
+    my_context_aware_color: &my_context_aware_color pri_3
+    my_param_color: &my_param_color pri_4
+    my_static_color: &my_static_color pri_5
+    my_enum_member_color: &my_enum_member_color pri_5
+
+    # literals lower-colorfulness colors: literal ideas + type-level ideas
+    my_string_color: &my_string_color tone_3
+    my_char_color: &my_char_color tone_4
+    my_number_color: &my_number_color tone_1
+
+    # (tones) (again) type-level ideas
+    my_type_param_color: &my_type_param_color tone_0
+    my_enum_color: &my_enum_color tone_1
+    my_struct_color: &my_struct_color tone_1
+    my_object_color: &my_object_color tone_2  # object in the Kotlin sense -- singleton
+    my_interface_color: &my_interface_color tone_3
+    my_typealias_color: &my_typealias_color tone_3
+    my_abstract_class_color: &my_abstract_class_color tone_4
+    my_class_color: &my_class_color tone_5
+
+    # backgrounds
+    my_info_fg: bg_7
+    my_active_fg: bg_5
+
+    ## SPECIAL TEXT
+    injected: &injected { bg: bg_7 }
+    injected_re: &injected_re { bg: bg_5 }
+    link: &link
+        fg: pri_5
+        effect: *underlined
+        effect_color: pri_5
+    link_followed: &link_followed
+        fg: pri_0
+        effect: *underlined
+        effect_color: pri_0
+
+    ## LANGUAGE PRIMITIVES
+    text: &text
+        fg: *my_fg
+        bg: bg
+    comment: &comment
+        fg: *my_fg_light
+    doc: &doc
+        fg: tint_2
+        ft: *bold
+    doc_tag: &doc_tag
+        fg: tint_5
+    doc_markup: &doc_markup
+        fg: tint_1
+    punctuation: &punctuation
+        fg: *my_fg
+    label: &label
+        fg: *my_label_color
+        ft: *bold
+    keyword: &keyword
+        fg: black
+        ft: *bold
+    metadata: &metadata
+        fg: *my_metadata_color
+    namespace: &namespace
+        fg: *my_scope_color
+    noise: &noise
+        fg: fg_light
+        bg: bg
+
+    ## IDENTIFIERS
+    # builtins
+    builtin: &builtin
+        fg: *my_builtin_color
+    constant: &constant
+        fg: *my_constant_color
+
+    # literals
+    number: &number
+        fg: *my_number_color
+    bytestring: &bytestring
+        fg: *my_char_color
+    string: &string
+        fg: *my_string_color
+
+    # types and classes
+    type_param: &type_param
+        fg: *my_type_param_color
+    interface: &interface
+        fg: *my_interface_color
+    abstract_class: &abstract_class
+        fg: *my_abstract_class_color
+    class: &class
+        fg: *my_class_color
+    type_alias: &type_alias
+        fg: *my_typealias_color
+        effect: *italic
+    object: &object
+        fg: *my_object_color
+    enum: &enum
+        fg: *my_enum_color
+    struct: &struct
+        fg: *my_struct_color
+
+    # variables
+    global_var: &global_var
+        fg: *my_nonlocal_color
+    # function stuff
+    # function declarations and references are black -- kind of like latent keywords.
+    func: &func
+        fg: black
+    # ... and so are function calls. This makes them the same as keywords, intentionally.
+    call: &call
+        fg: black
+        <<: *ft_control_flow_mixin
+    # ... sometimes we want to distinguish static from member calls, as well as overloaded
+    # operators. We use the static color, which is close to black but gives a slight hint.
+    static_call: &static_call
+        fg: *my_static_color
+        <<: *ft_control_flow_mixin
+    overloaded_op_call: &overloaded_op_call
+        <<: *static_call
+
+    # decorators are, in a loose way, a form of adding meta-functionality to a function
+    decorator: &decorator
+        fg: *my_metadata_color
+        <<: *ft_control_flow_mixin
+
+    capture: &capture { fg: *my_capture_color }
+    smartcast: &smartcast {fg: *my_context_aware_color}
+    parameter: &parameter { fg: *my_param_color }
+    # control flow transfer -> bold; making a class -> class color
+    call_constructor: &call_constructor
+        fg: *my_class_color
+        ft: *bold
+    # "capture" color just to make it more unique... playing it easy with the "rules"
+    this: &this { fg: *my_capture_color }
+    field: &field { fg: *my_field_color }
+    static_field: &static_field
+        fg: *my_static_color
+    # we distinguish a member of an enum from the type-level entity
+    enum_member: &enum_member
+        fg: *my_enum_member_color
+    # a property is a field with control flow -- field color, but bold in our language.
+    property: &property
+        <<: *field
+        <<: *ft_control_flow_mixin
+    global_property: &global_property
+        <<: *global_var
+        <<: *ft_control_flow_mixin
+
+    ## CODE ASSIST
+    # diffs
+    diffs:
+        bg_error: &bg_err
+            bg: &my_err_bg hl_2
+        bg_mod:
+            bg: &my_mod_bg hl_7
+            gutter: &my_mod_gutter hl_7
+        bg_new:
+            bg: &my_new_bg hl_5
+            gutter: &my_new_gutter hl_5
+        bg_del:
+            bg: &my_del_bg bg_darker
+            gutter: &my_del_gutter fg_light
+
+    errors:
+        bg_warn: &bg_warn hl_3
+        err_stripe_color: &my_err_stripe_col ult_1
+
+        striped_err: &striped_err
+            bg: *my_err_bg
+            stripe: *my_err_stripe_col
+        striped_mod: &striped_mod
+            bg: *my_mod_bg
+            stripe: *my_mod_bg
+        striped_new: &striped_new
+            bg: *my_new_bg
+            stripe: *my_new_bg
+        striped_del: &striped_del
+            bg: *my_del_bg
+            stripe: neutral
+
+        warn_stripe_color: &my_warn_stripe_col ult_2
+        my_weak_warn_color: &my_weak_warn_col tint_2
+        striped_warn: &striped_warn
+            bg: hl_3
+            stripe: *my_warn_stripe_col
+
+    ide:
+        # under_caret
+        under_caret: &under_caret_col hl_7
+        under_caret_write: &under_caret_write_col hl_5
+
+        ## IDE Style
+        my_active_color: &my_active_col wht_4
+        my_console_bg: &my_console_bg wht_3
+        my_ide_bg: &my_ide_bg wht_3
+        my_dark_bg: &my_dark_bg bg_dark
+
+        # line numbers, visual guides, etc.
+        my_nav_dark: &my_nav_dark tone_1  # striking
+        my_nav_light: &my_nav_light fg_light  # unobtrusive
+        my_nav_faint: &my_nav_faint bg_darker
+
+
+colors:
+    # color names in this configuration reference those in the palette produced from colorspec.yaml
+    # diff colors
+    added_lines_color: *my_new_gutter
+    deleted_lines_color: *my_del_gutter
+    modified_lines_color: *my_mod_gutter
+
+    ignored_added_lines_border_color: ult_3
+    ignored_deleted_lines_border_color: fg_dark
+    ignored_modified_lines_border_color: ult_5
+
+    # TODO clobbers deleted borders... bug?
+    # border_lines_color: *my_nav_dark
+
+    # "theme like" backgrounds
+    console_background_key: *my_console_bg
+    notification_background: *my_ide_bg
+
+    caret_row_color: *my_active_col
+    gutter_background: *my_dark_bg
+    information_hint: *my_ide_bg
+
+    # nav info
+    indent_guide: *my_nav_faint
+    selected_indent_guide: *my_nav_light
+    right_margin_color: *my_nav_light
+    line_numbers_color: *my_nav_light
+    line_number_on_caret_row_color: *my_nav_dark
+    tearline_color: *my_nav_light
+    visual_indent_guide: *my_nav_light
+
+    folded_text_border_color: { bg: &folded_color shd_0 }
+
+    # debugger
+    debug_exe_color: &my_debug_exe_col hl_3
+    debug_brk_color: &my_debug_brk_col hl_2
+
+    # TODO misc
+    diff_separators_background: *my_fg_light
+    documentation_color: *my_ide_bg
+    doc_comment_link: *link
+
+attributes:
+    ### ALL LANGUAGES
+
+    ## SPECIAL TEXT
+    hyperlink_attributes: *link
+    ctrl_clickable: *link
+    followed_hyperlink_attributes: *link_followed
+    default_template_language_color: *injected
+
+
+    ## LANGUAGE PRIMITIVES
+    text: *text
+    default_block_comment: *comment
+    default_line_comment: *comment
+
+    # Documentation
+    default_doc_comment: *doc
+    default_doc_comment_tag:
+        <<: *doc_tag
+        effect: 1
+    default_doc_comment_tag_value: *doc_tag
+    default_doc_markup: {bg: *injected}
+
+    # Documentation-like text attributes
+    marked_for_removal_attributes:
+        bg: *bg_warn
+        effect: *strikethrough
+        effect_color: hyper_2
+
+
+    # Punctuation
+    # some punctuation is filler or ancillary -- stays text
+    default_comma: *punctuation
+    default_semicolon: *punctuation
+    # parens are technically effectful, but ends up being too heavy if bolded
+    default_parenths: *punctuation
+    default_braces: *punctuation
+
+    # some punctuation is control flow
+    default_dot: *keyword
+    default_brackets: *keyword
+    # operators are function calls
+    default_operation_sign: *call
+
+    default_keyword: *keyword
+    default_label: *label
+
+    ## IDENTIFIERS
+    default_identifier:
+        fg: *my_fg
+    default_local_variable:
+        fg: *my_fg
+    # "preproc" is kind of a catch all for everything sneaky in local/object scope.
+    default_reassigned_local_variable:
+        <<: *ft_mutable_mixin
+
+    # literals
+    default_predefined_symbol: *builtin
+
+    default_constant: *constant
+
+    default_number: *number
+
+    default_string: *string
+    default_valid_string_escape: &string_escape
+        fg: *my_char_color
+    default_invalid_string_escape:
+        <<: *string_escape
+        <<: *bg_err
+
+    # variables
+    default_global_variable: *global_var
+
+    default_function_declaration: *func
+    default_instance_method: *func
+    default_static_method: *func
+
+    default_function_call: *call
+
+    default_parameter: *parameter
+    default_reassigned_parameter:
+        <<: *parameter
+        <<: *ft_mutable_mixin
+
+    default_class_name: *class
+
+    default_interface_name: *interface
+
+    default_instance_field: *field
+
+    default_static_field: *static_field
+
+    default_metadata: *metadata
+
+    # markup + declarative
+    default_tag: *text
+    default_attribute:
+        <<: *parameter
+    default_entity:
+        <<: *property
+
+    ## CODE ASSIST
+
+    # diffs and errors
+    diff_conflict: *striped_err
+    diff_deleted: *striped_del
+    diff_inserted: *striped_new
+    diff_modified: *striped_mod
+
+    # errors
+    errors_attributes: *striped_err
+    warning_attributes: *striped_warn
+    info_attributes: &weak_warning  # this is "weak warning"
+        stripe: *my_weak_warn_col
+        effect: *underwaved
+        effect_color: *my_weak_warn_col
+    typo:
+        stripe: &my_typo_color shd_5
+        effect: *bordered
+        effect_color: *my_typo_color
+
+    not_used_element_attributes:
+        <<: *weak_warning
+        fg: fg_light
+    bad_character: *striped_err
+    unknown_symbol: *striped_err
+    wrong_references_attributes: *striped_err
+
+    todo_default_attributes:
+        fg: tint_1
+        ft: *bold_italic
+        # TODO standardize weak/strong stripes
+        stripe: shd_2
+
+    # navigation
+    identifier_under_caret_attributes:
+        bg: *under_caret_col
+        stripe: *under_caret_col
+    write_identifier_under_caret_attributes:
+        bg: *under_caret_write_col
+        stripe: *under_caret_write_col
+
+    matched_brace_attributes:
+        bg: hl001
+        ft: *bold
+    unmatched_brace_attributes:
+        bg: *my_err_bg
+        ft: *bold
+
+    folded_text_attributes: { bg: *folded_color }
+    injected_language_fragment: { bg: *injected }
+    inline_parameter_hint:
+        fg: &my_param_hint_color neutral
+    inline_parameter_hint_current:
+        fg: *my_param_hint_color
+        bg: hl_5
+    inline_parameter_hint_highlighted:
+        fg: *my_param_hint_color
+        bg: hl_7
+    inline_parameter_hint_default:
+        fg: *my_param_hint_color
+        bg: bg_4
+
+    # search
+    search_result_attributes:
+        effect_color: hl_7
+        stripe: hl_7
+    text_search_result_attributes:
+        bg: hl_4
+        stripe: hl_4
+    write_search_result_attributes:
+        bg: hl_5
+        stripe: hl_5
+
+    # DEBUGGER
+    executionpoint_attributes:
+        bg: hl004
+        stripe: hl004
+    breakpoint_attributes: { bg: *my_debug_brk_col, stripe: *my_debug_brk_col }
+    evaluated_expression_attributes: { bg: *my_debug_exe_col }
+
+
+    debugger_inlined_values:
+        fg: &my_debug_inline_fg tone_3
+        bg: &my_debug_inline_bg dbg_1
+        ft: *italic
+
+    # it looks nice if it's the same for both. these colors should work with both
+    debugger_inlined_values_execution_line:
+        fg: *my_debug_inline_fg
+        bg: *my_debug_inline_bg
+        ft: *italic
+
+    debugger_inlined_values_modified:
+        fg: hyper_3
+        bg: *my_debug_inline_bg
+        ft: *bold
+
+    debugger_smart_step_into_selection:
+        bg: hlbg_1
+        effect: *bordered
+        effect_color: hyper_1
+
+    debugger_smart_step_into_target:
+        bg: hlbg_7
+        effect: *bordered
+        effect_color: hyper_7
+
+    # code with me
+    CodeWithMe.USER_1_MARKER: {bg: hyper_1}
+    CodeWithMe.USER_1_SELECTION: {bg: hlbg_1}
+    CodeWithMe.USER_2_MARKER: {bg: hyper_3}
+    CodeWithMe.USER_2_SELECTION: {bg: hlbg_3}
+    CodeWithMe.USER_3_MARKER: {bg: hyper_5}
+    CodeWithMe.USER_3_SELECTION: {bg: hlbg_5}
+    CodeWithMe.USER_4_MARKER: {bg: hyper_7}
+    CodeWithMe.USER_4_SELECTION: {bg: hlbg_7}
+    CodeWithMe.USER_5_MARKER: {bg: hyper_2}
+    CodeWithMe.USER_5_SELECTION: {bg: hlbg_2}
+    CodeWithMe.USER_6_MARKER: {bg: hyper_4}
+    CodeWithMe.USER_6_SELECTION: {bg: hlbg_4}
+
+    ###
+    ## LANGUAGES
+    ###
+    # JAVA
+    annotation_name_attributes: *metadata
+    annotation_attribute_name_attributes: *parameter
+    implicit_anonymous_class_parameter_attributes:
+        base: class_name_attributes
+    static_field_attributes: *static_field
+    instance_field_attributes: *field
+    static_final_field_attributes: *constant
+    instance_final_field_attributes: *constant
+    method_call_attributes: *call
+    static_method_imported_attributes:
+        <<: *call
+        <<: *static_field
+    abstract_class_name_attributes: *abstract_class
+    constructor_call_attributes: *call_constructor
+    constructor_declaration_attributes:
+        fg: *my_class_color
+        ft: *ft_none
+    type_parameter_name_attributes: *type_param
+
+    # CONSOLE
+    log_debug_output: {fg: tint_3}
+    log_verbose_output: {fg: tint_4}
+    log_info_output: {fg: tone_5}
+    log_warning_output: {fg: pri_2}
+    log_error_output: {fg: pri_1}
+
+    console_user_input: {fg: tone_3}
+    console_system_output: {fg: *my_fg}
+    console_normal_output: {fg: *my_fg}
+    console_error_output: {fg: black, bg: bg_2}
+
+    # DEBUGGER
+
+    # JS
+    js.module_name: *namespace
+    js.instance_member_function:
+        <<: *field
+        <<: *ft_control_flow_mixin
+    js.static_member_function:
+        <<: *static_field
+        <<: *ft_control_flow_mixin
+    js.global_function:
+        <<: *call
+    js.decorator: *decorator
+    js.local_function: *call
+    js.global_variable: { base: default_global_variable }
+    js.local_variable: { base: default_local_variable }
+    js.parameter: *parameter
+    js.regexp:
+        <<: *string_escape
+        <<: *injected_re
+    js.type_alias: *type_alias
+    js.primitive.type: *class
+    # TODO handle this new mixed case crap...
+    # javascript:injected_language_fragment: {base: injected_language_frament}
+
+    # KOTLIN
+    # variables
+    kotlin_mutable_variable:
+        <<: *ft_mutable_mixin
+    kotlin_named_argument: *parameter
+    kotlin_closure_default_parameter: *parameter
+    kotlin_wrapped_into_ref: *capture
+    # not bold since it's only a declaration
+    kotlin_instance_property_custom_property_declaration:
+        <<: *field
+        <<: *ft_control_flow_mixin
+    kotlin_backing_field_variable:
+        <<: *field
+        <<: *ft_mutable_mixin
+    kotlin_extension_property:
+        fg: *my_static_color
+    kotlin_package_property_custom_property_declaration:
+        <<: *global_var
+        <<: *ft_control_flow_mixin
+    kotlin_package_property: *global_var
+
+    # calls
+    kotlin_variable_as_function:
+        <<: *ft_control_flow_mixin
+    kotlin_variable_as_function_like:
+        <<: *ft_control_flow_mixin
+    # give this a slight color to make it easy to tell lambdas
+    # from block scope -- just bold isn't quit enough
+    kotlin_function_literal_braces_and_arrow:
+        <<: *call
+        fg: tone_2
+    kotlin_dynamic_function_call:
+        <<: *call
+        ft: *bold_italic
+    kotlin_dynamic_property_call:
+        <<: *property
+        <<: *ft_mutable_mixin
+    kotlin_package_function_call:
+        <<: *call
+    kotlin_extension_function_call:
+        <<: *call
+    kotlin_suspend_function_call:
+        fg: *my_async_color
+        <<: *ft_control_flow_mixin
+    # ${} escapes are control flow -- we suffer non-calls to be bolded as collateral damage
+    kotlin_string_escape:
+        <<: *string_escape
+        <<: *ft_control_flow_mixin
+
+    # punctuation/annotations
+    kotlin_exclexcl: *call
+    kotlin_quest: *class
+    kotlin_label: *label
+
+    # types
+    kotlin_abstract_class: *abstract_class
+    kotlin_enum: *enum
+    kotlin_object: *object
+    kotlin_constructor: *call_constructor
+    kotlin_enum_entry: *enum_member
+    kotlin_type_alias:
+        <<: *type_alias
+        ft: *italic
+
+    # smartcasts
+    kotlin_smart_cast_receiver:
+        <<: *smartcast
+        <<: *ft_control_flow_mixin
+    kotlin_smart_cast_value: *smartcast
+    kotlin_smart_cast_constant: *smartcast
+    kotlin_smart_constant: *smartcast
+
+    # C/C++ (Clion)
+    # structural
+    oc.macro_parameter: *parameter
+    oc.namespace_like: *namespace
+    # type level
+    oc.concept: *interface
+    oc.struct_like: *struct
+    oc.typedef: *type_alias
+    oc.template_type: *type_param
+    oc.template_value: *constant
+    # identifier-level
+    oc.enum_const: *enum_member
+    oc.struct_field: *field
+    oc.selfsuperthis: *this
+    # control flow
+    oc.label: *label
+    oc.overloaded_operator: *overloaded_op_call
+
+    # PYTHON
+    # in python we elide global/static underlines for cleanliness, especially since we have no good way of
+    # doing it anyway
+    py.func_definition: *func
+    py.function_call: *call
+    py.keyword_argument: *parameter
+    py.class_definition: *class
+    py.annotation:
+        fg: *my_annotation_color
+    # these names are so common that underlining them looks ugly. Also, most of these are
+    # callable. With this, and with deference to existing style ideas, we keep builtins a nice bold purple
+    py.builtin_name:
+        <<: *builtin
+        ft: *bold
+    # decorators are control flow
+    py.decorator: *decorator
+    py.predefined_definition: &py_predefined
+        # since python fields aren't hig
+        <<: *field
+    # not all predefined members are control flow, but they are all special enough to have us "highlight"
+    # when they are touched.
+    py.predefined_usage:
+        <<: *py_predefined
+        ft: *ft_control_flow_mixin
+    py.self_parameter: *this
+    py.string.u: *string
+    py.string.b: *bytestring
+
+    # SHELL
+    bash.function_def_name:
+        base: default_function_declaration
+    bash.subshell_command:
+        <<: *static_call
+    bash.external_command:
+        <<: *static_call
+    bash.var_def:
+        <<: *text
+    bash.var_use:
+        <<: *parameter
+    bash.here_doc_start:
+        <<: *label
+    bash.here_doc_end:
+        <<: *label
+
+    # SQL
+    sql_database_object: *builtin
+    sql_procedure:
+        fg: *my_static_color
+        <<: *ft_control_flow_mixin
+    sql_schema: *interface
+
+    # TYPESCRIPT
+    # meta
+    ts.module_name: *namespace
+    # types
+    ts.type_parameter: *type_param
+    ts.primitive.types: *builtin
+    ts.type_guard: *smartcast
+
+    ## NON-PROGRAMMING FILES
+    # CSS
+    ## meta
+    css.keyword: *decorator  # keywords are so rare they act more like imports
+    css.semicolon: *noise
+    css.colon: *noise
+    ## selectors: most of these conform to our color conventions
+    css.attribute_name: *parameter
+    css.class_name: *static_field  # static "member" of a selector
+    css.property_name: {fg: black}
+    css.pseudo: *field  # dynamic "member" of a selector
+    # we can play a bit loose with bold since CSS has so little control flow
+    css.hash:  # this is #id selectors
+        <<: *builtin
+        ft: *bold
+    ## rvalues
+    css.color: *enum_member # loose interpretation
+    css.ident: *text
+    css.property_value: *text
+    css.unicode.range: *bytestring
+    # GHERKIN
+    gherkin_outline_parameter_substitution:
+        base: default_instance_field
+    gherkin_pystring:
+        base: default_string
+    gherkin_regexp_paramter:
+        base: default_parameter
+    # TOML
+    org.toml.BOOLEAN: *constant
+    # XML
+    xml_tag_data: *text
+    # XPATH
+    xpath.keyword:
+        base: default_keyword
+    xpath.function:
+        base: default_function_call
+    xpath.xpath_name: *static_field
+    # YAML
+    yaml_anchor: *label
+    yaml_scalar_key: *keyword
+
+font:
+    font_scale: 1.0
+    line_spacing: 0.90
+    editor_font_size: 12
+    editor_font_name: JetBrains Mono
+    editor_ligatures: true
+    console_font_name: JetBrains Mono
+    console_font_size: 12
+    console_ligatures: true
+    console_line_spacing: 0.8

@@ -4,9 +4,9 @@ Fast jit-compiled versions of common color conversion functions suitable for
 use in optimization routines.
 """
 
+from collections.abc import Mapping
 from timeit import Timer
 from typing import Any
-from collections.abc import Mapping
 
 import numpy as np
 from colour import RGB_COLOURSPACES, xyY_to_XYZ
@@ -296,13 +296,12 @@ def dE_2000_jit(Lab1: NDArray[np.float64], Lab2: NDArray[np.float64]) -> NDArray
     RT = -RC * sin_deg(2 * Δθ)
     KL = KC = KH = 1
 
-    ΔE = np.sqrt(
+    return np.sqrt(
         (ΔLp / (KL * SL)) ** 2
         + (ΔCp / (KC * SC)) ** 2
         + (ΔHp / (KH * SH)) ** 2
         + RT * (ΔCp / (KC * SC)) * (ΔHp / (KH * SH))
     )
-    return ΔE
 
 
 # noinspection PyPep8Naming

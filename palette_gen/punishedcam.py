@@ -15,8 +15,8 @@ from palette_gen.fastcolors import (
     XYZ_to_xyY_jit,
     atan2_360,
     cos_deg,
-    sRGB_to_XYZ_jit,
     sin_deg,
+    sRGB_to_XYZ_jit,
     xyY_E,
     xyY_to_XYZ_jit,
 )
@@ -77,11 +77,11 @@ def XYZ_to_PUNISHEDCAM_JabQMsh_jit(
     Lsw: float,
     Lb: float,
     Lmax: float,
-    do_sr_interpolation: bool = True,
-    do_ncb_fix: bool = True,
-    do_hk_correction: bool = True,
-    do_make_jab_ucs: bool = True,
-    do_make_rest_ucs: bool = True,
+    do_sr_interpolation: bool = True,  # noqa: FBT001, FBT002
+    do_ncb_fix: bool = True,  # noqa: FBT001, FBT002
+    do_hk_correction: bool = True,  # noqa: FBT001, FBT002
+    do_make_jab_ucs: bool = True,  # noqa: FBT001, FBT002
+    do_make_rest_ucs: bool = True,  # noqa: FBT001, FBT002
 ) -> NDArray[np.float64]:
     """
     Converts XYZ to a cursed and punished version of CIECAM02-(UCS).

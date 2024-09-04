@@ -1,17 +1,15 @@
 """
 Declarative Jetbrains Color Scheme Generator.
 """
-from __future__ import annotations
 
-import logging
 from abc import abstractmethod
-from argparse import Namespace
+from argparse import ArgumentParser, Namespace
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field, fields
 from datetime import datetime
 from functools import partial
 from pathlib import Path
-from typing import Any
-from collections.abc import Callable, Iterable
+from typing import Self, final
 from xml.dom import minidom
 
 # noinspection PyPep8Naming
@@ -19,7 +17,8 @@ from xml.etree.ElementTree import Element, SubElement, tostring
 
 import yaml
 
-from palette_gen.processors import ConcretePalette
+from palette_gen.processors.core.concrete_palette import ConcretePalette
+from palette_gen.processors.core.palette_processor import PaletteProcessor
 
 
 def strip_hex(s: str) -> str:
@@ -40,19 +39,19 @@ def jb_hex(s: str | int) -> str:
 
 
 class XMLAccessor:
-    def __init__(self, f: Callable[..., XMLBuilder]):
+    def __init__(self, f: Callable[..., "XMLBuilder"]):
         self.f = f
 
-    def __getattr__(self, item: str) -> Callable[..., XMLBuilder]:
+    def __getattr__(self, item: str) -> Callable[..., "XMLBuilder"]:
         return partial(self.f, item)
 
 
 class XMLAccessorDescriptor:
-    def __init__(self, push: bool, empty: bool):
+    def __init__(self, *, push: bool, empty: bool):
         self.push = push
         self.empty = empty
 
-    def __get__(self, instance: XMLBuilder, owner: type[XMLBuilder]) -> XMLAccessor:
+    def __get__(self, instance: "XMLBuilder", owner: type["XMLBuilder"]) -> XMLAccessor:
         if self.empty and self.push:
             return XMLAccessor(instance.push_empty)
         elif self.empty:
@@ -63,6 +62,7 @@ class XMLAccessorDescriptor:
             return XMLAccessor(instance.elem)
 
 
+@final
 class XMLBuilder(XMLAccessor):
     e = XMLAccessorDescriptor(push=False, empty=True)
     ep = XMLAccessorDescriptor(push=True, empty=True)
@@ -74,7 +74,7 @@ class XMLBuilder(XMLAccessor):
         XMLAccessor.__init__(self, self.elem)
 
     @classmethod
-    def mk_root(cls, name: str, text: str | None, /, **attrs: str) -> XMLBuilder:
+    def mk_root(cls, name: str, text: str | None, /, **attrs: str) -> Self:
         root = Element(name, {**attrs})
         if text is not None:
             root.text = text
@@ -92,7 +92,7 @@ class XMLBuilder(XMLAccessor):
         except IndexError:
             return self.top()
 
-    def __call__(self, next_parent: Element) -> XMLBuilder:
+    def __call__(self, next_parent: Element) -> Self:
         if self._staged is not None:
             raise RuntimeError("Staged parent twice without entering context...")
         self._staged = next_parent
@@ -103,29 +103,29 @@ class XMLBuilder(XMLAccessor):
             raise RuntimeError("Entering context without parent...")
         self._staged = None
 
-    def __exit__(self, *args: Any) -> None:
+    def __exit__(self, *args: object) -> None:
         self.parent_stack.pop()
 
     def append(self, node: Element) -> None:
         self.top().append(node)
 
-    def elem(self, name: str, text: str | None = None, /, **attrs: str) -> XMLBuilder:
+    def elem(self, name: str, text: str | None = None, /, **attrs: str) -> Self:
         elem = SubElement(self.top(), name, {**attrs})
         if text is not None:
             elem.text = text
         assert self.last() == elem
         return self
 
-    def empty(self, name: str, /, **attrs: str) -> XMLBuilder:
+    def empty(self, name: str, /, **attrs: str) -> Self:
         return self.elem(name, None, **attrs)
 
-    def push(self, name: str, text: str | None, **attrs: str) -> XMLBuilder:
+    def push(self, name: str, text: str | None, **attrs: str) -> Self:
         self.elem(name, text, **attrs)
         self.parent_stack.append(self.last())
         self._staged = self.last()
         return self
 
-    def push_empty(self, name: str, /, **attrs: str) -> XMLBuilder:
+    def push_empty(self, name: str, /, **attrs: str) -> Self:
         return self.push(name, None, **attrs)
 
 
@@ -229,10 +229,9 @@ class JBFontSpec:
         yield from (JBAtomicOption(f.name, getattr(self, f.name)) for f in fields(self))
 
 
-@dataclass()
-class JBScheme(XMLSerializable):
+@dataclass(kw_only=True)
+class JBSchemeXMLBuilder(XMLSerializable):
     name: str
-
     color_spec: JBColorSpec
     attrs: Iterable[JBAttrSpec]
     font_spec: JBFontSpec
@@ -271,14 +270,27 @@ class JBScheme(XMLSerializable):
 
         return b.root()
 
+
+@dataclass()
+class JBSchemeProcessor(PaletteProcessor):
+    """
+    generate JetBrains .xml color scheme
+    """
+
+    cmd_name = "jb_scheme"
+
     @classmethod
-    def process_config(cls, args: Namespace) -> None:
+    def _add_extra_parser_opts(cls, parser: ArgumentParser) -> None:
+        parser.add_argument(
+            "-s", "--spec", help="scheme spec config file, yaml", type=str, required=True
+        )
+
+    def _generate_body(self, concrete_palette: ConcretePalette, args: Namespace) -> str:
         scheme = yaml.full_load(Path(args.spec).read_text())
         font = JBFontSpec(**scheme["font"])
         palette = ConcretePalette.from_config(yaml.full_load(Path(args.palette).read_text()))
 
         print(f"Generating scheme for {palette.name}, view {palette.view}")
-
         color_spec = JBColorSpec(
             JBAtomicOption(key, palette.subs(val).bare_hex) for key, val in scheme["colors"].items()
         )
@@ -290,15 +302,10 @@ class JBScheme(XMLSerializable):
             for key, val in scheme["attributes"].items()
         ]
 
-        jb_scheme = JBScheme(color_spec=color_spec, attrs=attrs, font_spec=font, **scheme["meta"])
+        xml_builder = JBSchemeXMLBuilder(
+            color_spec=color_spec, attrs=attrs, font_spec=font, **scheme["meta"]
+        )
 
-        root = jb_scheme.to_xml()
-        dom: str = minidom.parseString(tostring(root)).toprettyxml(indent="  ")
-        dom = dom[dom.index("\n") + 1 :]
-
-        if (out_fn := args.out) is None:
-            out_fn = jb_scheme.name + f"{palette.view}.xml"
-
-        out_path = Path(out_fn)
-        logging.info(f"Writing generated scheme {out_fn}")
-        out_path.write_text(dom)
+        root = xml_builder.to_xml()
+        dom: str = minidom.parseString(tostring(root)).toprettyxml(indent="  ")  # noqa: S318
+        return dom[dom.index("\n") + 1 :]

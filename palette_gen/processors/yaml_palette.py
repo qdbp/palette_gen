@@ -27,13 +27,14 @@ def gen_palette_cmd(args: Namespace) -> None:
     else:
         out_path = Path(out_fn)
 
-    gen_palette(spec_path, out_path, args.views or [], args.html, args.cone)
+    gen_palette(spec_path, out_path, args.views or [], do_html=args.html, do_cone=args.cone)
 
 
 def gen_palette(
     spec_path: Path,
     out_path: Path,
     explicit_views: list[str],
+    *,
     do_html: bool,
     do_cone: bool,
 ) -> None:
@@ -69,21 +70,21 @@ def gen_palette(
             "bg_hex": vs.bg_hex,
         }
 
-        view_fn = out_path.parent.joinpath(f"{out_path.stem}.{view_name}{out_path.suffix}")
+        pal_out_fn = out_path.parent.joinpath(f"{out_path.stem}.{view_name}{out_path.suffix}")
+        pal_out_fn.parent.mkdir(parents=True, exist_ok=True)
 
         print(f"Solving palette {view_name}...")
         palette = PaletteSolver(view_name + "_palette", vs=vs, palette_spec=palette_spec)
         out |= palette.serialize()
 
-        print(f"Saving palette to {view_fn.absolute()}.")
-        with view_fn.open("w") as f:
-            yaml.dump(out, f)
+        print(f"Saving palette to {pal_out_fn.absolute()}.")
+        pal_out_fn.write_text(yaml.dump(out, indent=2))
 
         if do_html:
-            view_fn.with_suffix(".html").write_text(palette.dump_html())
+            pal_out_fn.with_suffix(".html").write_text(palette.dump_html())
 
         if do_cone:
             fig = palette.draw_cone()
-            cone_fn = view_fn.with_suffix(".cone.html")
+            cone_fn = pal_out_fn.with_suffix(".cone.html")
             logging.info(f"Saving cone plot to {cone_fn}")
             fig.write_html(cone_fn)

@@ -1,7 +1,5 @@
-from __future__ import annotations
-
-from typing import Any
 from collections.abc import Iterable
+from typing import Any, Self, final
 
 import numpy as np
 from numpy.typing import NDArray
@@ -10,6 +8,7 @@ from palette_gen.solvers import JabColor
 from palette_gen.solvers.color import FixedJabTargetSolver, OrganizedColors
 
 
+@final
 class JMatchedGreys(FixedJabTargetSolver):
     """
     Returns a set of (whitepoint-adapted) greys of given lightnesses.
@@ -33,6 +32,6 @@ class JMatchedGreys(FixedJabTargetSolver):
 
     # defect: py311 Self type
     @classmethod
-    def construct_from_config(cls, conf: dict[str, Any]) -> JMatchedGreys:
+    def construct_from_config(cls, conf: dict[str, Any]) -> Self:
         conf.pop("name", None)
         return cls(j_dict=conf)

@@ -1,5 +1,5 @@
 [tool.black]
-target-version = ['py311']
+target-version = ['py312']
 line-length = 105
 
 [tool.mypy]
@@ -15,24 +15,8 @@ allow_redefinition = true
 
 [tool.ruff]
 line-length = 105
-target-version = 'py311'
-select = ["B", "E", "C4", "DTZ", "ERA", "F", "ISC", "PD", "PIE", "PLE", "PTH", "PLR", "PLW", "Q", "RSE", "SIM", "T20", "UP", "W"]
-ignore = [
-    "B905",
-    "E402",
-    "E731",
-    "E741",
-    "PD002",
-    "PD011",
-    "PD901",
-    "PLR0911",
-    "PLR0912",
-    "PLR0913",
-    "PLR0915",
-    "PLR2004",
-    "PLW2901",
-    "SIM108",
-    "T201",
-]
-
-
+target-version = 'py312'
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = ["T201", "NPY002", "TD", "EM", "ANN", "E402", "PLC2401", "PLC2403", "PLR0911", "PLR0912", "PLR0913", "PLR0915", "S101", "RET505", "RET506", "RET507", "E203", "RET508", "PD002", "PD901", "SIM108", "E266", "PT004", "FIX002", "S311", "TRY003", "S603", "E731", "PLR2004", "TCH001", "TCH002", "TCH003", "PD011", "COM812", "PT011", "C", "D", "G", "E741", "ARG002", "PLW2901", "N", "SLF001", "PGH003", "PGH004", "RUF002", "RUF003", "PYI042", "B905", "BLE001"]
+unfixable = ["F841", "ERA", "RUF100"]

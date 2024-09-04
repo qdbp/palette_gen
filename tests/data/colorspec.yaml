@@ -1,0 +1,158 @@
+name: Restraint
+definitions:
+    base_offset: &base_offset -0.12
+    alt_offset: &alt_offset 0.38
+    lights_offset: &lights_offset 0.18
+views:
+    Twilight:
+        T: 6000
+        Lsw: 2
+        Lmax: 10
+        Lb: 6
+        bg_hex: "#ECE6DD"
+    Night:
+        T: 5000
+        Lsw: 1
+        Lmax: 5
+        Lb: 2
+        bg_hex: "#ECE6DD"
+    Day:
+        T: 6500
+        Lsw: 25
+        Lmax: 40
+        Lb: 20
+        bg_hex: "#e8e8e8"
+palette:
+    greys:
+        type: greys
+        args:
+            white: 0.97
+            bg_light: 0.92
+            bg: 0.90
+            bg_dark: &j_bg_dark 0.80
+            bg_darker: &j_bg_darker 0.73
+            neutral: 0.5
+            fg_light: 0.35
+            fg: 0.15
+            fg_dark: 0.07
+            black: 0.00
+
+    # a "decomposed" set of tri-hexes that gives better colorfulness uniformity
+    # to avoid jarring # purple ultras and blue tones.
+    tone:
+        type: jab_ring
+        args:
+            n_colors: 6
+            j_lb: &tone_j 0.26
+            j_ub: *tone_j
+            # hug the wall
+            m_lb: &tone_m 15
+            m_ub: *tone_m
+            hue_offset: *base_offset
+    pri:
+        type: jab_ring
+        args:
+            n_colors: 6
+            j_lb: &pri_j 0.35
+            j_ub: *pri_j
+            # hug the wall
+            m_lb: &pri_m 17
+            m_ub: *pri_m
+            hue_offset: *alt_offset
+    ult:
+        type: jab_ring
+        args:
+            n_colors: 6
+            j_lb: &ult_j 0.44
+            j_ub: *ult_j
+            # will constrain purple from being eye-burning
+            m_lb: &ult_m 21
+            m_ub: *ult_m
+            hue_offset: *base_offset
+    tint:
+        type: jab_ring
+        args:
+            n_colors: 6
+            j_lb: &tint_j 0.43
+            j_ub: *tint_j
+            m_lb: &tint_m 8
+            m_ub: *tint_m
+            hue_offset: *alt_offset
+    hyper:
+        type: jab_ring
+        args:
+            n_colors: 8
+            j_lb: 0.55
+            j_ub: 0.55
+            m_lb: 23
+            m_ub: 23
+            hue_offset: *lights_offset
+    shd:
+        type: jab_ring
+        args:
+            n_colors: 8
+            j_lb: 0.7
+            j_ub: 0.7
+            m_lb: 3
+            m_ub: 3
+            hue_offset: *lights_offset
+    # highlights: git diffs, actual highlighting of SMALL text segments.
+    hl:
+        type: jab_ring
+        args:
+            n_colors: 8
+            j_lb: 0.77
+            j_ub: 0.77
+            m_lb: 11
+            m_ub: 11
+            hue_offset: *lights_offset
+    # ultra highlights: use sparingly
+    hyperhl:
+        type: jab_ring
+        args:
+            n_colors: 8
+            j_lb: 0.71
+            j_ub: 0.71
+            m_lb: 23
+            m_ub: 23
+            hue_offset: *lights_offset
+    # highlighted backgrounds: highlighting suitable for large blocks
+    hlbg:
+        type: jab_ring
+        args:
+            n_colors: 8
+            j_lb: 0.79
+            j_ub: 0.79
+            m_lb: 7.0
+            m_ub: 7.0
+            hue_offset: *lights_offset
+    # backgrounds: lightness matched with the universal background.
+    bg:
+        type: jab_ring
+        args:
+            n_colors: 8
+            j_lb: *j_bg_dark
+            j_ub: *j_bg_dark
+            m_lb: 4.0
+            m_ub: 4.0
+            hue_offset: *lights_offset
+    # dark backgrounds: for contrast and stripes
+    dbg:
+        type: jab_ring
+        args:
+            n_colors: 8
+            j_lb: *j_bg_darker
+            j_ub: *j_bg_darker
+            m_lb: 3.0
+            m_ub: 3.0
+            hue_offset: *lights_offset
+    # light backgrounds: for console, editor panes, text fields. Highest lightness we have.
+    wht:
+        type: jab_ring
+        args:
+            n_colors: 8
+            j_lb: 0.88
+            j_ub: 0.88
+            m_lb: 3.0
+            m_ub: 3.0
+            hue_offset: *lights_offset

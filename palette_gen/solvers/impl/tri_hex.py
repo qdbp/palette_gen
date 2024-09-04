@@ -1,5 +1,5 @@
-from dataclasses import dataclass
 from collections.abc import Iterable
+from dataclasses import dataclass
 
 import numpy as np
 from numpy.typing import NDArray
@@ -87,10 +87,9 @@ class TriHexSolver(FixedJabTargetSolver):
 
     def organize_colors(self, raw_colors: Iterable[JabColor]) -> OrganizedColors:
         raw_colors = list(raw_colors)
-        out = {
+        return {
             self.ring0_name or self.name + "r0": ColorSolver.hue_sort(raw_colors[0:6]),
             self.ring1_name or self.name + "r1": ColorSolver.hue_sort(raw_colors[6:12]),
             self.tints_name or self.name + "tint": ColorSolver.hue_sort(raw_colors[18:24]),
             self.ring2_name or self.name + "r2": ColorSolver.hue_sort(raw_colors[12:18]),
         }
-        return out

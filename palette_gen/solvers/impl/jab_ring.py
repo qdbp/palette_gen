@@ -20,7 +20,8 @@ class JabRingSpec(FixedJabTargetSolver):
     hue_offset: float = 0.0
 
     def __post_init__(self) -> None:
-        assert self.n_colors > 1 and not self.n_colors % 2
+        assert self.n_colors > 1
+        assert not self.n_colors % 2
 
     def jab_target(self, ab_offset: NDArray[np.float64]) -> NDArray[np.float64]:
         """

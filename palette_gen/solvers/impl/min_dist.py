@@ -1,6 +1,6 @@
+from collections.abc import Iterable
 from dataclasses import astuple, dataclass
 from typing import Any
-from collections.abc import Iterable
 
 import numpy as np
 from matplotlib.colors import to_rgb
@@ -100,11 +100,12 @@ class HingeMinDistSolver(ColorSolver):
         print("loss: ", end="")
         for name, val in zip(loss_names, out_loss):
             print(f"{name}={val:.3f}; ", end="")
-        print("")
+        print()
 
         # noinspection PyTypeChecker
         return sorted(
-            JabColor(rgb=tuple(expit(rgb)), vs=vs) for rgb in res["x"].reshape((-1, 3))  # type: ignore
+            JabColor(rgb=tuple(expit(rgb)), vs=vs)
+            for rgb in res["x"].reshape((-1, 3))  # type: ignore
         )
 
     @staticmethod

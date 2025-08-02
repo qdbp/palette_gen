@@ -1,0 +1,130 @@
+bg_hex: '#e8e8e8'
+name: RestraintAuto
+palette:
+  bg:
+  - hex: '#d8dae1'
+    name: bg000
+  - hex: '#ded8e0'
+    name: bg001
+  - hex: '#e5d7da'
+    name: bg002
+  - hex: '#e6d9d3'
+    name: bg003
+  - hex: '#e0ded1'
+    name: bg004
+  - hex: '#d7dfd5'
+    name: bg005
+  - hex: '#d3dedb'
+    name: bg006
+  - hex: '#d4dcdf'
+    name: bg007
+  greys:
+  - hex: '#ffffff'
+    name: white
+  - hex: '#f9f9f9'
+    name: bg_light
+  - hex: '#e8e8e7'
+    name: bg
+  - hex: '#d7d7d7'
+    name: bg_dark
+  - hex: '#727271'
+    name: fg_light
+  - hex: '#404040'
+    name: fg
+  - hex: '#272727'
+    name: fg_dark
+  - hex: '#020202'
+    name: black
+  hl:
+  - hex: '#bfc3db'
+    name: hl000
+  - hex: '#d1bed7'
+    name: hl001
+  - hex: '#e2bcc5'
+    name: hl002
+  - hex: '#e6c3b0'
+    name: hl003
+  - hex: '#d7d0ac'
+    name: hl004
+  - hex: '#bcd3b6'
+    name: hl005
+  - hex: '#aed0c8'
+    name: hl006
+  - hex: '#b1cad5'
+    name: hl007
+  pri:
+  - hex: '#1b1b54'
+    name: pri000
+  - hex: '#3b114a'
+    name: pri001
+  - hex: '#551c30'
+    name: pri002
+  - hex: '#623218'
+    name: pri003
+  - hex: '#5a4e16'
+    name: pri004
+  - hex: '#234b1e'
+    name: pri005
+  - hex: '#004a3f'
+    name: pri006
+  - hex: '#003c4f'
+    name: pri007
+  salmons:
+  - hex: '#f2dfce'
+    name: salmon
+  - hex: '#fff1e4'
+    name: salmon_hl
+  - hex: '#ccbcad'
+    name: salmon_dark
+  tint:
+  - hex: '#6f7598'
+    name: tint000
+  - hex: '#896d92'
+    name: tint001
+  - hex: '#a06d7b'
+    name: tint002
+  - hex: '#a77960'
+    name: tint003
+  - hex: '#988d5c'
+    name: tint004
+  - hex: '#6e8f67'
+    name: tint005
+  - hex: '#54897e'
+    name: tint006
+  - hex: '#587f90'
+    name: tint007
+  ult:
+  - hex: '#4d307c'
+    name: ult000
+  - hex: '#702c62'
+    name: ult001
+  - hex: '#883c38'
+    name: ult002
+  - hex: '#895c1c'
+    name: ult003
+  - hex: '#5e6d23'
+    name: ult004
+  - hex: '#006b44'
+    name: ult005
+  - hex: '#00656b'
+    name: ult006
+  - hex: '#004379'
+    name: ult007
+  wht:
+  - hex: '#e2e3e8'
+    name: wht000
+  - hex: '#e6e2e7'
+    name: wht001
+  - hex: '#eae1e3'
+    name: wht002
+  - hex: '#ebe3de'
+    name: wht003
+  - hex: '#e7e6dd'
+    name: wht004
+  - hex: '#e1e6e0'
+    name: wht005
+  - hex: '#dfe6e4'
+    name: wht006
+  - hex: '#dfe4e7'
+    name: wht007
+view: Day

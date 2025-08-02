@@ -1,8 +1,0 @@
-numpy
-numba~=0.60.0
-matplotlib
-scipy
-pyyaml
-colour-science==0.4.4
-plotly
-pytest

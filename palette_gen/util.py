@@ -1,13 +1,8 @@
 from collections.abc import Callable
-from typing import Any, TypeVar
-
-T = TypeVar("T")
-V = TypeVar("V")
+from typing import Any
 
 
-def map_leaves(
-    fun: Callable[..., V], arg: T | list[Any] | dict[str, Any]
-) -> V | list[Any] | dict[str, Any]:
+def map_leaves[V](fun: Callable[..., V], arg: Any) -> V | list[Any] | dict[str, Any]:
     if isinstance(arg, dict):
         return {k: map_leaves(fun, v) for k, v in arg.items()}
     elif isinstance(arg, list):

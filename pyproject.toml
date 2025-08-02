@@ -44,6 +44,8 @@ check_untyped_defs = true
 allow_redefinition = true
 
 [tool.ruff]
+exclude = ['notebooks/**']
+
 line-length = 105
 target-version = "py313"
 select = ["ALL"]
@@ -97,6 +99,7 @@ ignore = [
     "PYI042",
     "B905",
     "BLE001",
+    "LOG015",
+    "PLC0415",
 ]
 unfixable = ["F841", "ERA", "RUF100"]
-

@@ -62,7 +62,7 @@ def matmul_last_axis(mat: NDArray[np.float64], vecs: NDArray[np.float64]) -> NDA
     array of shape (..., n)
     """
 
-    out = np.zeros(vecs.shape[:-1] + (mat.shape[0],))
+    out = np.zeros((*vecs.shape[:-1], mat.shape[0]))
     for i in range(mat.shape[0]):
         out[..., i] = (vecs[..., :] * mat[i, :]).sum(axis=-1)
     return out
@@ -292,7 +292,7 @@ def XYZ_to_PUNISHEDCAM_JabQMsh_jit(
             s = (M / Q) ** 0.5
             # hue stays the same by construction
 
-    out = np.zeros(XYZ.shape[:-1] + (7,))
+    out = np.zeros((*XYZ.shape[:-1], 7))
     out[..., 0] = J
     # rescale to keep distance function trivial
     out[..., 1] = a / 100

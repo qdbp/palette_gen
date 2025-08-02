@@ -62,7 +62,7 @@ class RGBColor:
 
     @cached_property
     def hex(self) -> str:
-        return cast(str, to_hex(self.rgb))
+        return cast("str", to_hex(self.rgb))
 
     @cached_property
     def bare_hex(self) -> str:

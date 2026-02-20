@@ -9,7 +9,7 @@ from dataclasses import dataclass, field, fields
 from datetime import datetime
 from functools import partial
 from pathlib import Path
-from typing import Self, final
+from typing import Any, Self, cast, final
 from xml.dom import minidom
 
 # noinspection PyPep8Naming
@@ -39,10 +39,10 @@ def jb_hex(s: str | int) -> str:
 
 
 class XMLAccessor:
-    def __init__(self, f: Callable[..., "XMLBuilder"]):
+    def __init__(self, f: Callable[..., XMLBuilder]):
         self.f = f
 
-    def __getattr__(self, item: str) -> Callable[..., "XMLBuilder"]:
+    def __getattr__(self, item: str) -> Callable[..., XMLBuilder]:
         return partial(self.f, item)
 
 
@@ -51,15 +51,14 @@ class XMLAccessorDescriptor:
         self.push = push
         self.empty = empty
 
-    def __get__(self, instance: "XMLBuilder", owner: type["XMLBuilder"]) -> XMLAccessor:
+    def __get__(self, instance: XMLBuilder, owner: type[XMLBuilder]) -> XMLAccessor:
         if self.empty and self.push:
             return XMLAccessor(instance.push_empty)
-        elif self.empty:
+        if self.empty:
             return XMLAccessor(instance.empty)
-        elif self.push:
+        if self.push:
             return XMLAccessor(instance.push)
-        else:
-            return XMLAccessor(instance.elem)
+        return XMLAccessor(instance.elem)
 
 
 @final
@@ -78,7 +77,7 @@ class XMLBuilder(XMLAccessor):
         root = Element(name, {**attrs})
         if text is not None:
             root.text = text
-        return XMLBuilder(root)
+        return cls(root)
 
     def top(self) -> Element:
         return self.parent_stack[-1]
@@ -282,13 +281,25 @@ class JBSchemeProcessor(PaletteProcessor):
     @classmethod
     def _add_extra_parser_opts(cls, parser: ArgumentParser) -> None:
         parser.add_argument(
-            "-s", "--spec", help="scheme spec config file, yaml", type=str, required=True
+            "-s",
+            "--spec",
+            help="scheme spec config file, yaml",
+            type=str,
+            required=True,
         )
 
     def _generate_body(self, concrete_palette: ConcretePalette, args: Namespace) -> str:
         scheme = yaml.full_load(Path(args.spec).read_text())
         font = JBFontSpec(**scheme["font"])
         palette = ConcretePalette.from_config(yaml.full_load(Path(args.palette).read_text()))
+
+        def _coerce_attr_value(k: str, v: object) -> str | bool:
+            if k in COLOR_KEYS:
+                palette_key: int | str = v if isinstance(v, int | str) else str(v)
+                return palette.subs(palette_key).bare_hex
+            if k == "_keep_case":
+                return bool(v)
+            return str(v)
 
         print(f"Generating scheme for {palette.name}, view {palette.view}")
         color_spec = JBColorSpec(
@@ -297,13 +308,16 @@ class JBSchemeProcessor(PaletteProcessor):
         attrs = [
             JBAttrSpec(
                 name=key,
-                **{k: palette.subs(v).bare_hex if k in COLOR_KEYS else str(v) for k, v in val.items()},
+                **cast("dict[str, Any]", {k: _coerce_attr_value(k, v) for k, v in val.items()}),
             )
             for key, val in scheme["attributes"].items()
         ]
 
         xml_builder = JBSchemeXMLBuilder(
-            color_spec=color_spec, attrs=attrs, font_spec=font, **scheme["meta"]
+            color_spec=color_spec,
+            attrs=attrs,
+            font_spec=font,
+            **scheme["meta"],
         )
 
         root = xml_builder.to_xml()

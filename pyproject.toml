@@ -6,12 +6,12 @@ build-backend = "setuptools.build_meta"
 name = "palette_gen"
 version = "2.0.0"
 description = "color scheme generator"
-requires-python = ">=3.13"
+requires-python = ">=3.14"
 authors = [{ name = "qdbp" }]
 urls = { Homepage = "http://github.com/qdbp/palette_gen" }
 dependencies = [
     "numpy",
-    "numba",
+    "numba>=0.63.1",
     "matplotlib",
     "scipy",
     "pyyaml",
@@ -27,79 +27,57 @@ include = ["palette_gen*"]
 
 [dependency-groups]
 test = ["pytest"]
-lint = ["ruff", "black"]
-typecheck = ["mypy"]
+lint = ["ruff>=0.15.2"]
+typecheck = ["ty>=0.0.17"]
 dev = [
+    "pre-commit",
     { include-group = "lint" },
     { include-group = "typecheck" },
     { include-group = "test" },
 ]
 
-[tool.mypy]
-python_version = "3.13"
-ignore_missing_imports = true
-follow_imports = "silent"
-implicit_optional = true
-check_untyped_defs = true
-allow_redefinition = true
-
 [tool.ruff]
 exclude = ['notebooks/**']
-
 line-length = 105
-target-version = "py313"
+target-version = "py314"
+
+[tool.ruff.lint]
 select = ["ALL"]
 ignore = [
-    "T201",
-    "NPY002",
-    "TD",
-    "EM",
-    "ANN",
-    "E402",
-    "PLC2401",
-    "PLC2403",
-    "PLR0911",
-    "PLR0912",
-    "PLR0913",
-    "PLR0915",
-    "S101",
-    "RET505",
-    "RET506",
-    "RET507",
-    "E203",
-    "RET508",
-    "PD002",
-    "PD901",
-    "SIM108",
-    "E266",
-    "FIX002",
-    "S311",
-    "TRY003",
-    "S603",
-    "E731",
-    "PLR2004",
-    "TC001",
-    "TC002",
-    "TC003",
-    "PD011",
-    "COM812",
-    "PT011",
-    "C",
-    "D",
-    "G",
-    "E741",
-    "ARG002",
-    "PLW2901",
-    "N",
-    "SLF001",
-    "PGH003",
-    "PGH004",
-    "RUF002",
-    "RUF003",
-    "PYI042",
-    "B905",
-    "BLE001",
-    "LOG015",
-    "PLC0415",
+    "D",  # Human-facing docstring formatting is intentionally de-emphasized.
+    "TRY",  # Exception-message wording guidance is readability-biased.
+    "ANN001",  # Legacy CLI/parser call signatures remain dynamically typed.
+    "ANN201",  # Public helper return inference is acceptable in this codebase.
+    "ANN204",  # Dunder return types are noise-heavy here.
+    "ANN401",  # Boundary seams still route untyped third-party payloads.
+    "ARG002",  # Descriptor/protocol hooks intentionally accept unused params.
+    "COM812",  # Trailing-comma layout is delegated to Ruff's formatter.
+    "EM101",  # Exception-construction style is intentionally unconstrained.
+    "EM102",  # Exception-construction style is intentionally unconstrained.
+    "FIX002",  # TODO policing is managed by issue workflow, not lint.
+    "G004",  # Existing logging callsites intentionally use f-strings.
+    "LOG015",  # Root logger usage is deliberate in CLI-facing glue.
+    "N802",  # Conversion kernels preserve domain-standard function names.
+    "N803",  # Formula variables preserve literature notation.
+    "N806",  # Formula-local uppercase symbols preserve color-science notation.
+    "N816",  # Global constants mirror upstream domain naming.
+    "NPY002",  # RandomState is retained for deterministic solver behavior.
+    "PGH003",  # Blanket type-ignore remains for numba-jitted boundaries.
+    "PLC0415",  # Optional heavy imports remain lazy by design.
+    "PLC2401",  # Unicode math symbols are acceptable in this domain.
+    "PLR0913",  # Solver kernels trade arg-count brevity for explicit state lanes.
+    "PLR0915",  # Long numeric kernels are kept contiguous for optimization clarity.
+    "PLR2004",  # Color-space constants are domain literals, not magic values.
+    "RUF002",  # Bibliography text intentionally preserves Unicode punctuation.
+    "RUF003",  # Bibliography text intentionally preserves Unicode punctuation.
+    "S101",  # Test assertions should stay idiomatic.
+    "SIM108",  # Branch form is preferred when it keeps formula flow explicit.
+    "T201",  # CLI and generation utilities intentionally print output.
+    "TC001",  # Runtime-evaluated annotations require concrete imports at runtime.
+    "TC002",  # Runtime-evaluated annotations require concrete imports at runtime.
+    "TC003",  # Runtime-evaluated annotations require concrete imports at runtime.
+    "TD002",  # TODO metadata conventions are not enforced here.
+    "TD003",  # TODO metadata conventions are not enforced here.
+    "TD004",  # TODO metadata conventions are not enforced here.
 ]
 unfixable = ["F841", "ERA", "RUF100"]

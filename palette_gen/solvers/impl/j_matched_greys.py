@@ -26,7 +26,7 @@ class JMatchedGreys(FixedJabTargetSolver):
 
     def organize_colors(self, raw_colors: Iterable[JabColor]) -> OrganizedColors:
         colors = list(raw_colors)
-        for k, c in zip(self.j_dict.keys(), colors):
+        for k, c in zip(self.j_dict.keys(), colors, strict=True):
             c.name = k
         return colors
 

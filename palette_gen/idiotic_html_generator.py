@@ -7,7 +7,7 @@ import builtins
 import sys
 from collections.abc import Callable
 from io import StringIO
-from typing import Any, Self, TypeVar, final
+from typing import Any, Self, TypeVar, cast, final
 
 H = TypeVar("H", bound="HTML")
 
@@ -28,9 +28,9 @@ class HTML:
         self.indent: int = _parent.indent + 1 if _parent else 0
         self._old_print = print
 
-    def __getattr__(self, tag: str) -> Callable[[], H]:
+    def __getattr__(self, tag: str) -> Callable[..., H]:
         def _mk_node(**kwargs: str) -> H:
-            return HTML(tag, _parent=self, **kwargs)  # type: ignore
+            return cast("H", HTML(tag, _parent=self, **kwargs))
 
         return _mk_node
 
@@ -49,11 +49,11 @@ class HTML:
 
         attr_string = " ".join(f'{k}="{v}"' for k, v in self.atts.items())
         self.out.write(
-            "\n" + "\t" * self.indent + f"<{self.tag}{' ' if attr_string else ''}{attr_string}>"
+            "\n" + "\t" * self.indent + f"<{self.tag}{' ' if attr_string else ''}{attr_string}>",
         )
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:  # type: ignore
+    def __exit__(self, exc_type: object, exc_val: object, exc_tb: object) -> None:
         self.out.write("\n" + "\t" * self.indent + f"</{self.tag}>")
         sys.stdout = true_stdout
         builtins.print = self._old_print

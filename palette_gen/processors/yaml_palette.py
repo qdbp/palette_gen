@@ -55,7 +55,7 @@ def gen_palette(
 
     palette_spec: dict[str, ColorSolver] = {
         name: constructors[d.pop("type")].construct_from_config(  # type: ignore
-            d["args"] | {"name": name}
+            d["args"] | {"name": name},
         )
         for name, d in full_spec["palette"].items()
     }

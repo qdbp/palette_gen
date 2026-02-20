@@ -26,7 +26,7 @@ local palette = {{
         {",\n        ".join(f'["{k}"] = "{v}"' for k, v in concrete_palette.hex_map.items())}
     }},
 }}
-""".strip()
+""".strip(),
         )
 
 
@@ -35,5 +35,5 @@ if __name__ == "__main__":
         Namespace(
             palette="/home/main/programming/projects/SalmonThemeBkp/build/palette.Twilight.yaml",
             output="test.lua",
-        )
+        ),
     )

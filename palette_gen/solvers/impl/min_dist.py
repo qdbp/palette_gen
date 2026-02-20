@@ -1,6 +1,5 @@
 from collections.abc import Iterable
 from dataclasses import astuple, dataclass
-from typing import Any
 
 import numpy as np
 from matplotlib.colors import to_rgb
@@ -15,7 +14,7 @@ from palette_gen.punishedcam import (  # type: ignore
     XYZ_to_PUNISHEDCAM_JabQMsh_jit,
     de_punished_jab,
 )
-from palette_gen.solvers import JabColor, T, ViewingSpec
+from palette_gen.solvers import JabColor, ViewingSpec
 from palette_gen.solvers.color import ColorSolver
 
 
@@ -59,7 +58,7 @@ class HingeMinDistSolver(ColorSolver):
 
     seed: int | None = None
 
-    def _solve_colors(self, bg_rgb: str, vs: ViewingSpec) -> Iterable[JabColor]:
+    def _solve_colors(self, bg_hex: str, vs: ViewingSpec) -> Iterable[JabColor]:
         print(f"Palette {self.name}...")
 
         if self.seed is not None:
@@ -70,7 +69,7 @@ class HingeMinDistSolver(ColorSolver):
         out_jab = np.zeros((self.n_colors, 3))
 
         bg_jab = XYZ_to_PUNISHEDCAM_JabQMsh_jit(
-            sRGB_to_XYZ_jit(np.array(to_rgb(bg_rgb)).reshape(-1, 3)),
+            sRGB_to_XYZ_jit(np.array(to_rgb(bg_hex)).reshape(-1, 3)),
             vs.XYZw,
             vs.Lsw,
             vs.Lb,
@@ -98,7 +97,7 @@ class HingeMinDistSolver(ColorSolver):
 
         loss_names = ["min(d)", "J", "M", "ΔE", "Δh"]
         print("loss: ", end="")
-        for name, val in zip(loss_names, out_loss):
+        for name, val in zip(loss_names, out_loss, strict=True):
             print(f"{name}={val:.3f}; ", end="")
         print()
 
@@ -162,13 +161,12 @@ class HingeMinDistSolver(ColorSolver):
         out_loss[1] = hinge_loss(jabqmsh[..., 0], j_min, j_max, j_alpha).mean()
         out_loss[2] = hinge_loss(jabqmsh[..., 4], m_min, m_max, m_alpha).mean()
         out_loss[3] = hinge_loss(
-            de_punished_jab(background_jab, jabqmsh), de_min, de_max, de_alpha
+            de_punished_jab(background_jab, jabqmsh),
+            de_min,
+            de_max,
+            de_alpha,
         ).mean()
         # rescale the hue loss to have the same relative weight independent of
         out_loss[4] = hinge_loss(hg, hg_min, hg_max, hg_alpha).mean()
 
         return out_loss.sum()  # type: ignore
-
-    @classmethod
-    def construct_from_config(cls: type[T], config: dict[str, Any]) -> T:
-        raise NotImplementedError

@@ -65,6 +65,6 @@ class CylinderMesh(FixedJabTargetSolver):
     def organize_colors(self, raw_colors: Iterable[JabColor]) -> OrganizedColors:
         raw_colors = list(raw_colors)
         out = {}
-        for name, ring in zip(self.ring_names, range(self.n_rings)):
+        for name, ring in zip(self.ring_names, range(self.n_rings), strict=True):
             out[name] = raw_colors[ring * self.n_colors : (ring + 1) * self.n_colors]
         return out

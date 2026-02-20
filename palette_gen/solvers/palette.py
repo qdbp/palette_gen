@@ -32,7 +32,7 @@ class PaletteSolver:
                 for key, sublist in solved_colors.items():
                     if key in all_colors:
                         raise ValueError(
-                            f"Palette-generated key {key} conflicts with anexisting colorset."
+                            f"Palette-generated key {key} conflicts with anexisting colorset.",
                         )
                     all_colors[key] = sublist.copy()
 
@@ -59,7 +59,7 @@ class PaletteSolver:
                     axis=-1,
                 ).reshape(-1, 3)
                 for ix in range(cube_dim)
-            ]
+            ],
         )
 
     def draw_cone(self) -> Any:
@@ -98,7 +98,7 @@ class PaletteSolver:
                     marker={"color": "black", "size": 1},
                     mode="markers",
                 ),
-            ]
+            ],
         )
 
     def draw_colors(self) -> None:

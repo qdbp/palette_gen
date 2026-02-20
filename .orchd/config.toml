@@ -1,0 +1,16 @@
+# forgejo-assimilation:start
+# Installed by scripts/assimilate-repo.sh.
+# Each style guide slug resolves to repo:main/swarm:docs/style/<slug>.md.
+[style_guides]
+langs = ["python", "rust"]
+
+# Optional repo-local reading material hooks:
+# [docs]
+# [[docs.rule]]
+# kind = "include"
+# ref = "workdir:docs/ARCHITECTURE.md"
+# roles = ["*"]
+# directives = ["impl"]
+# order = 10
+# importance = "recommended"
+# forgejo-assimilation:end

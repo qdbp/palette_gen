@@ -1,11 +1,13 @@
 import itertools
+from collections.abc import Callable
+from typing import Any, cast
 
 import numpy as np
 import pytest
 from colour import (
     HSV_to_RGB,
-    Lab_to_LCHab,
-    Luv_to_LCHuv,
+    Lab_to_LCHab,  # ty: ignore[unresolved-import]
+    Luv_to_LCHuv,  # ty: ignore[unresolved-import]
     XYZ_to_Lab,
     XYZ_to_Luv,
     XYZ_to_xyY,
@@ -49,15 +51,19 @@ def test_converters():
     lab = XYZ_to_Lab(xyz)
     lchab = Lab_to_LCHab(lab)
 
-    for fun, src, target in [
-        [HSV_to_RGB_jit, hsv, rgb],
-        [sRGB_to_XYZ_jit, rgb, xyz],
-        [xyY_to_XYZ_jit, xyy, xyz],
-        [XYZ_to_Lab_D65_jit, xyz, lab],
-        [Luv_to_LCHuv_jit, luv, lchuv],
-        [Lab_to_LCHab_jit, lab, lchab],
-    ]:
-        print(f"testing {fun.__name__}")
+    ColorArray = NDArray[Any]
+    Converter = Callable[[ColorArray], ColorArray]
+    conversion_cases: list[tuple[Converter, ColorArray, ColorArray]] = [
+        (cast("Converter", HSV_to_RGB_jit), hsv, rgb),
+        (cast("Converter", sRGB_to_XYZ_jit), rgb, xyz),
+        (cast("Converter", xyY_to_XYZ_jit), xyy, xyz),
+        (cast("Converter", XYZ_to_Lab_D65_jit), xyz, lab),
+        (cast("Converter", Luv_to_LCHuv_jit), luv, lchuv),
+        (cast("Converter", Lab_to_LCHab_jit), lab, lchab),
+    ]
+
+    for fun, src, target in conversion_cases:
+        print(f"testing {getattr(fun, '__name__', '<jit-converter>')}")
         our_output = fun(src)
         succ = np.allclose(our_output, target, equal_nan=True, atol=1e-3)
         if not succ:

@@ -116,7 +116,8 @@ def xyY_to_XYZ_jit(xyY: NDArray[np.float64]) -> NDArray[np.float64]:
 # noinspection PyPep8Naming
 @njit
 def XYZ_to_xyY_jit(
-    XYZ: NDArray[np.float64], black_xy: NDArray[np.float64] = xyY_D65
+    XYZ: NDArray[np.float64],
+    black_xy: NDArray[np.float64] = xyY_D65,
 ) -> NDArray[np.float64]:
     out: NDArray[np.float64] = np.zeros_like(XYZ)
 
@@ -133,7 +134,8 @@ def XYZ_to_xyY_jit(
 # noinspection PyPep8Naming
 @njit
 def XYZ_to_Luv_D65_jit(
-    XYZ: NDArray[np.float64], XYZr: NDArray[np.float64] = XYZ_D65
+    XYZ: NDArray[np.float64],
+    XYZr: NDArray[np.float64] = XYZ_D65,
 ) -> NDArray[np.float64]:
     ε = 0.008856
     κ = 903.3
@@ -183,7 +185,8 @@ def sin_deg(arr: NDArray[np.float64]) -> NDArray[np.float64]:
 # noinspection PyPep8Naming
 @njit
 def XYZ_to_Lab_D65_jit(
-    XYZ: NDArray[np.float64], XYZr: NDArray[np.float64] = XYZ_D65
+    XYZ: NDArray[np.float64],
+    XYZr: NDArray[np.float64] = XYZ_D65,
 ) -> NDArray[np.float64]:
     ε = 216 / 24389
     κ = 24389 / 27
@@ -300,7 +303,7 @@ def dE_2000_jit(Lab1: NDArray[np.float64], Lab2: NDArray[np.float64]) -> NDArray
         (ΔLp / (KL * SL)) ** 2
         + (ΔCp / (KC * SC)) ** 2
         + (ΔHp / (KH * SH)) ** 2
-        + RT * (ΔCp / (KC * SC)) * (ΔHp / (KH * SH))
+        + RT * (ΔCp / (KC * SC)) * (ΔHp / (KH * SH)),
     )
 
 

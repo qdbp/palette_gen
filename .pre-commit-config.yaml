@@ -1,6 +1,18 @@
 repos:
-- repo: https://github.com/charliermarsh/ruff-pre-commit
-  rev: "v0.12.7"
+- repo: local
   hooks:
-  - id: ruff-check
   - id: ruff-format
+    name: ruff format
+    entry: uv run --frozen ruff format
+    language: system
+    types_or: [python, pyi]
+  - id: ruff-check
+    name: ruff check
+    entry: uv run --frozen ruff check --fix
+    language: system
+    types_or: [python, pyi]
+  - id: ty-check
+    name: ty check
+    entry: uv run --frozen ty check palette_gen tests
+    language: system
+    pass_filenames: false

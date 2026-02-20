@@ -97,7 +97,7 @@ class FixedJabTargetSolver(ColorSolver, ABC):
 
         if jab_target.ndim != 2 or jab_target.shape[1] != 3:
             raise RuntimeError(
-                f"jab_target has unsuitable shape {jab_target.shape}; should be (n_colors, 3)"
+                f"jab_target has unsuitable shape {jab_target.shape}; should be (n_colors, 3)",
             )
 
         # initial logit values

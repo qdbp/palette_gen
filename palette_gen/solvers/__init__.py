@@ -1,7 +1,7 @@
 import re
 from dataclasses import dataclass, field
 from functools import cached_property
-from typing import Self, TypeVar, cast, final
+from typing import Self, TypeVar, cast
 
 import numpy as np
 from matplotlib.colors import to_hex, to_rgb
@@ -50,7 +50,6 @@ class ViewingSpec:
         return self.xyz_to_cam(self.rgb_to_xyz(rgb)).squeeze()
 
 
-@final
 @dataclass(order=True)
 class RGBColor:
     rgb: tuple[float, float, float]
@@ -58,7 +57,7 @@ class RGBColor:
 
     @classmethod
     def from_string(cls, s: str) -> Self:
-        return RGBColor(rgb=to_rgb(s))
+        return cls(rgb=tuple(to_rgb(s)))
 
     @cached_property
     def hex(self) -> str:

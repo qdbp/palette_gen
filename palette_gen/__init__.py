@@ -57,6 +57,6 @@ if __name__ == "__main__":
             "/home/main/programming/projects/SalmonThemeBkp/build/palette.Twilight.yaml",
             "-o",
             "test.lua",
-        ]
+        ],
     )
     main()

@@ -24,7 +24,7 @@ class ConcretePalette:
                 if name in hex_map:
                     warning(f"Duplicate color key {item}")
                 hex_map[name] = item["hex"]
-        return ConcretePalette(**palette_dict, hex_map=hex_map)
+        return cls(**palette_dict, hex_map=hex_map)
 
     def subs(self, color: int | str) -> RGBColor:
         """
@@ -50,7 +50,7 @@ class ConcretePalette:
                     "{}{:05d}",
                 ]
             ]
-        except (IndexError, ValueError):
+        except IndexError, ValueError:
             keys = [color]
 
         for key in keys:

@@ -2,7 +2,7 @@
 # Installed by scripts/assimilate-repo.sh.
 # Each style guide slug resolves to repo:main/swarm:docs/style/<slug>.md.
 [style_guides]
-langs = ["python", "rust"]
+langs = ["python"]
 
 # Optional repo-local reading material hooks:
 # [docs]

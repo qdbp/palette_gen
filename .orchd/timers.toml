@@ -1,0 +1,13 @@
+version = 1
+
+[[timers]]
+id = "pm"
+template = "pm"
+
+[timers.context]
+mode = "reuse"
+key = "pm-palette-gen-shared"
+min_context_pct = 40
+
+[timers.workspace]
+cwd = "offices/codex-pm/main__palette_gen"
